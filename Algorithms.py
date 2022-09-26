@@ -5,6 +5,8 @@ import seaborn as sns
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, classification_report, plot_confusion_matrix
 from sklearn.tree import DecisionTreeClassifier
+import matplotlib.pyplot as plt
+from sklearn.tree import plot_tree
 import plotly.graph_objects as go
 import plotly.figure_factory as ff
 
@@ -85,7 +87,15 @@ def decision_tree(df):
     cm = confusion_matrix(y_test,base_pred)
     labels = list(df['species'].unique())
     fig = ff_plot_confusion_matrix(cm, labels, labels)
-    return fig
+
+    plt.figure(figsize=(12, 8),dpi=150)
+    plot_tree(model)
+    plt.savefig('dt_tree',filled=True,feature_names=X.columns)
+
+    df_feature = pd.DataFrame(index=X.columns,data=model.feature_importances_).reset_index()
+    df_feature.columns = ['Feature Name', 'Feature Importance']
+
+    return fig, df_feature
 
 
 
