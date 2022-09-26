@@ -10,7 +10,7 @@ df = pd.read_csv('penguins_size.csv')
 df = df.dropna()
 df = df[df['sex']!='.']
 
-css_sheet = [dbc.themes.COSMO]
+css_sheet = [dbc.themes.SKETCHY]
 BS = "https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
 app = Dash(__name__, external_stylesheets=css_sheet)
 
@@ -52,6 +52,31 @@ app.layout = html.Div([
     html.Br(),
 
     html.Div([
+        html.Div(html.Label("Select Set of Parameters", style={'background': '#f3f2f5', 'fontSize': '20px'})),
+        html.Br(),
+
+        html.Div([
+            html.Label('Criterion'),
+            dcc.Dropdown(id='criterion', options=[{'label': 'gini', 'value': 'gini'},
+                                                  {'label': 'entropy', 'value': 'entropy'},
+                                                  {'label': 'log_loss', 'value': 'log_loss'}],
+                         value='gini'),
+        ]),
+        html.Div([
+            html.Label('Splitter'),
+            dcc.Dropdown(id='splitter', options=[{'label': 'best', 'value': 'best'},
+                                                  {'label': 'random', 'value': 'random'},],
+                         value='best'),
+        ]),
+        html.Div([
+            html.Label('Max Depth'),
+            dcc.Input(id='max_depth', type='number', value=0),
+        ]),
+
+
+    ]),
+
+    html.Div([
         html.Label('Show the Feature Importance DataFrame'),
         dcc.RadioItems(id='show_df_feature', options=[{'label': 'Yes', 'value': 'Yes'},
                                               {'label': 'No', 'value': 'No'}],
@@ -89,7 +114,7 @@ app.layout = html.Div([
                  html.Img(src='data:image/png;base64,{}'.format(encoded_image.decode())),
              ], hidden=True),
 
-])
+], style={'background': 'Lightgreen'})
 
 
 @app.callback(Output('df_div', 'hidden'),
@@ -137,14 +162,22 @@ def cm_graph(show_cm):
                Output('df_feature', 'data'),
                Output('df_feature', 'columns'), ],
               [Input('run_dt', 'n_clicks'),
-               State('show_df', 'value'), ], )
-def update_df(n_clicks, show_df):
+               State('show_df', 'value'),
+               State('criterion', 'value'),
+               State('splitter', 'value'),
+               State('max_depth', 'value'), ], )
+def update_df(n_clicks, show_df, criterion, splitter, max_depth):
 
 
     df_columns = [{'name': col, 'id': col} for col in df.columns]
     df_table = df.to_dict(orient='records')
 
-    cm_fig, df_feature = decision_tree(df)
+    if max_depth == 0:
+        max_depth = None
+
+    cm_fig, df_feature = decision_tree(df, criterion, splitter, max_depth)
+
+
 
     df_feature_columns = [{'name': col, 'id': col} for col in df_feature.columns]
     df_feature_table = df_feature.to_dict(orient='records')

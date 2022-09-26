@@ -76,11 +76,11 @@ def ff_plot_confusion_matrix(z, x, y):
     return fig
 
 
-def decision_tree(df):
+def decision_tree(df, criterion, splitter, max_depth):
     X = pd.get_dummies(df.drop('species', axis=1), drop_first=True)
     y = df['species']
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=101)
-    model = DecisionTreeClassifier()
+    model = DecisionTreeClassifier(criterion=criterion, splitter=splitter, max_depth=max_depth)
     model.fit(X_train, y_train)
     base_pred = model.predict(X_test)
 
