@@ -76,26 +76,57 @@ def ff_plot_confusion_matrix(z, x, y):
     return fig
 
 
-def decision_tree(df, criterion, splitter, max_depth):
+def decision_tree(df, criterion, splitter, max_depth, min_samples_split, min_samples_leaf, min_weight_fraction_leaf,
+                  max_features, random_state, max_leaf_nodes, min_impurity_decrease, class_weight, ccp_alpha, labels):
     X = pd.get_dummies(df.drop('species', axis=1), drop_first=True)
     y = df['species']
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=101)
-    model = DecisionTreeClassifier(criterion=criterion, splitter=splitter, max_depth=max_depth)
+    model = DecisionTreeClassifier(criterion=criterion, splitter=splitter, max_depth=max_depth,
+                                   min_samples_split=min_samples_split, min_samples_leaf=min_samples_leaf,
+                                   min_weight_fraction_leaf=min_weight_fraction_leaf, max_features=max_features,
+                                   random_state=random_state, max_leaf_nodes=max_leaf_nodes,
+                                   min_impurity_decrease=min_impurity_decrease, class_weight=class_weight,
+                                   ccp_alpha=ccp_alpha)
     model.fit(X_train, y_train)
     base_pred = model.predict(X_test)
 
     cm = confusion_matrix(y_test,base_pred)
-    labels = list(df['species'].unique())
+    labels = list(df[labels].unique())
     fig = ff_plot_confusion_matrix(cm, labels, labels)
 
     plt.figure(figsize=(12, 8),dpi=150)
     plot_tree(model)
     plt.savefig('dt_tree',filled=True,feature_names=X.columns)
 
-    df_feature = pd.DataFrame(index=X.columns,data=model.feature_importances_).reset_index()
+    data = model.feature_importances_
+    data = data.round(3)
+
+    df_feature = pd.DataFrame(index=X.columns,data=data).reset_index()
     df_feature.columns = ['Feature Name', 'Feature Importance']
+    df_feature = df_feature.sort_values(by='Feature Importance', ascending=False)
 
-    return fig, df_feature
+    dummy_features_df = X[:1]
+    dummy_features_df_columns = list(X.columns)
+
+    return fig, df_feature, dummy_features_df, dummy_features_df_columns
+
+def train_decision_tree(df, criterion, splitter, max_depth, min_samples_split, min_samples_leaf, min_weight_fraction_leaf,
+                  max_features, random_state, max_leaf_nodes, min_impurity_decrease, class_weight, ccp_alpha, labels,
+                        input_features):
+    X = pd.get_dummies(df.drop('species', axis=1), drop_first=True)
+    y = df['species']
+    model = DecisionTreeClassifier(criterion=criterion, splitter=splitter, max_depth=max_depth,
+                                   min_samples_split=min_samples_split, min_samples_leaf=min_samples_leaf,
+                                   min_weight_fraction_leaf=min_weight_fraction_leaf, max_features=max_features,
+                                   random_state=random_state, max_leaf_nodes=max_leaf_nodes,
+                                   min_impurity_decrease=min_impurity_decrease, class_weight=class_weight,
+                                   ccp_alpha=ccp_alpha)
+    model.fit(X, y)
+    input_features = input_features.split(',')
+    input_features = [float(x) for x in input_features]
 
 
+    prediction = model.predict([input_features])
+
+    return prediction
 
