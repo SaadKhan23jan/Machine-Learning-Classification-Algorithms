@@ -35,6 +35,7 @@ def heatmap_plot_confusion_matrix(cm, labels, title="Confusion Matix"):
             fig = go.Figure(data=data, layout=layout)
             return fig
 
+
 def ff_plot_confusion_matrix(z, x, y):
     # change each element of z to type string for annotations
     z_text = [[str(y) for y in x] for x in z]
@@ -78,8 +79,8 @@ def ff_plot_confusion_matrix(z, x, y):
 
 def decision_tree(df, criterion, splitter, max_depth, min_samples_split, min_samples_leaf, min_weight_fraction_leaf,
                   max_features, random_state, max_leaf_nodes, min_impurity_decrease, class_weight, ccp_alpha, labels):
-    X = pd.get_dummies(df.drop('species', axis=1), drop_first=True)
-    y = df['species']
+    X = pd.get_dummies(df.drop(labels, axis=1), drop_first=True)
+    y = df[labels]
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=101)
     model = DecisionTreeClassifier(criterion=criterion, splitter=splitter, max_depth=max_depth,
                                    min_samples_split=min_samples_split, min_samples_leaf=min_samples_leaf,
@@ -110,11 +111,12 @@ def decision_tree(df, criterion, splitter, max_depth, min_samples_split, min_sam
 
     return fig, df_feature, dummy_features_df, dummy_features_df_columns
 
-def train_decision_tree(df, criterion, splitter, max_depth, min_samples_split, min_samples_leaf, min_weight_fraction_leaf,
-                  max_features, random_state, max_leaf_nodes, min_impurity_decrease, class_weight, ccp_alpha, labels,
-                        input_features):
-    X = pd.get_dummies(df.drop('species', axis=1), drop_first=True)
-    y = df['species']
+
+def train_decision_tree(df, criterion, splitter, max_depth, min_samples_split, min_samples_leaf,
+                        min_weight_fraction_leaf, max_features, random_state, max_leaf_nodes,
+                        min_impurity_decrease, class_weight, ccp_alpha, labels, input_features):
+    X = pd.get_dummies(df.drop(labels, axis=1), drop_first=True)
+    y = df[labels]
     model = DecisionTreeClassifier(criterion=criterion, splitter=splitter, max_depth=max_depth,
                                    min_samples_split=min_samples_split, min_samples_leaf=min_samples_leaf,
                                    min_weight_fraction_leaf=min_weight_fraction_leaf, max_features=max_features,
@@ -122,7 +124,7 @@ def train_decision_tree(df, criterion, splitter, max_depth, min_samples_split, m
                                    min_impurity_decrease=min_impurity_decrease, class_weight=class_weight,
                                    ccp_alpha=ccp_alpha)
     model.fit(X, y)
-    input_features = input_features.split(',')
+    input_features = input_features.split(" ")
     input_features = [float(x) for x in input_features]
 
 

@@ -9,11 +9,12 @@ import datetime
 import io
 
 from Algorithms import decision_tree, train_decision_tree
-#from upload_df import parse_contents
 
-#df = pd.read_csv('penguins_size.csv')
-#df = df.dropna()
-#df = df[df['sex']!='.']
+# from upload_df import parse_contents
+
+# df = pd.read_csv('penguins_size.csv')
+# df = df.dropna()
+# df = df[df['sex']!='.']
 
 
 def parse_contents(contents, filename, date):
@@ -46,7 +47,7 @@ def parse_contents(contents, filename, date):
 
 
 
-css_sheet = [dbc.themes.SKETCHY]
+css_sheet = [dbc.themes.COSMO]
 BS = "https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
 app = Dash(__name__, external_stylesheets=css_sheet)
 
@@ -186,7 +187,7 @@ app.layout = html.Div([
 
             html.Div([
                 html.Label('Max Leaf Node', style={'fontWeight': 'bold'}),
-                dcc.Dropdown(id='max_leaf_nodes', value=None, placeholder='default (None)'),
+                dcc.Input(id='max_leaf_nodes', value=None, placeholder='default (None)'),
             ], style={'width': '12%'}),
 
             html.Div([
@@ -264,31 +265,40 @@ app.layout = html.Div([
     html.Br(),
 
 
-
-
-
-
-
     html.Div([
-        html.Label('Data Frame with dummy variables'),
-        html.Div(id='dummy_features_df',
-                 children=[
-                     dash_table.DataTable(id='dummy_feature'),
-                 ], hidden=False),
-    ]),
+        html.Label('Data Frame with dummy variables', style={'fontSize': '20px', 'fontWeight': 'bold'}),
+        dash_table.DataTable(id='dummy_feature'),
+                 ], style={'backgroundColor': 'Lightblue'}),
     html.Br(),
 
 
-    html.Label('Enter the values of all Features separated by comma'),
+    html.Label('Enter the values of all Features separated by single white space',
+               style={'fontSize': '20px', 'fontWeight': 'bold'}),
+    html.Br(),
     dcc.Input(id='input_features', type='text'),
-    dbc.Button('Train Model on All Data', id='train_model', n_clicks=0, style={'fontSize': '20px'}),
+    html.Br(),
+    html.Br(),
+    dbc.Button('Train Model on All Data', id='train_model', n_clicks=0,
+               style={'fontSize': '20px', 'fontWeight': 'bold'}),
+    html.Br(),
+    html.Div(),
 
-    html.Div([html.Label('Equation from Model 2: ', style={'fontWeight': 'bold', 'paddingRight': '10px'}),
-              html.Div(id='prediction'), ], style={'display': 'flex'}),
+    html.Div([html.Label('Prediction with the Selected Parameters set: ',
+                         style={'fontSize': '20px', 'fontWeight': 'bold', 'paddingRight': '10px'}),
+              html.Div(id='prediction'),
+              html.Br(),
+              html.Br(),],
+             style={'width': '50%', 'background': '#f3f2f5', 'fontSize': '20px', 'fontWeight': 'bold',
+                    'paddingRight': '10px', 'paddingLeft': '200px', 'borderRadius': '50px'}),
+
+    html.Div(),
+    html.Div(),
+    html.Div(),
 
 ], style={'background': 'Lightgreen'})
 
 
+# This is for Uploading the csv file
 @app.callback(
               #Output('output-data-upload', 'children'),
               Output('file_uploaded', 'children'),
@@ -297,7 +307,7 @@ app.layout = html.Div([
               State('upload-data', 'filename'),
               State('upload-data', 'last_modified'),
               prevent_initial_call=True)
-def update_output(n_clicks, content, filename, date):
+def upload_dataframe(n_clicks, content, filename, date):
 
     # print(type(df))#this will show data type as a pandas dataframe
     # print(df)
@@ -325,7 +335,7 @@ def df_div(show_df):
 @app.callback(Output('df_feature_div', 'hidden'),
               Input('show_df_feature', 'value'),
               prevent_initial_call=True)
-def df_div(show_df_feature):
+def df_feature_div(show_df_feature):
     if show_df_feature == "No":
         return True
     else:
@@ -368,7 +378,6 @@ def show_dataframe(n_clicks, show_df):
         return df_table, df_columns
 
 
-
 @app.callback([Output('confusion_matrix', 'figure'),
                Output('df_feature', 'data'),
                Output('df_feature', 'columns'),
@@ -392,7 +401,6 @@ def show_dataframe(n_clicks, show_df):
 def update_df(n_clicks, criterion, splitter, max_depth, min_samples_split,
               min_samples_leaf, min_weight_fraction_leaf, max_features, random_state, max_leaf_nodes,
               min_impurity_decrease, class_weight, ccp_alpha, labels):
-
 
     if max_depth == 0:
         max_depth = None
@@ -431,10 +439,9 @@ def update_df(n_clicks, criterion, splitter, max_depth, min_samples_split,
                State('labels', 'value'),
                State('input_features', 'value'), ],
               prevent_initial_call=True, )
-def predictions(n_clicks, criterion, splitter, max_depth, min_samples_split,
-              min_samples_leaf, min_weight_fraction_leaf, max_features, random_state, max_leaf_nodes,
-              min_impurity_decrease, class_weight, ccp_alpha, labels, input_features):
-
+def predictions(n_clicks, criterion, splitter, max_depth, min_samples_split, min_samples_leaf, min_weight_fraction_leaf,
+                max_features, random_state, max_leaf_nodes, min_impurity_decrease, class_weight, ccp_alpha, labels,
+                input_features):
 
     if max_depth == 0:
         max_depth = None
@@ -448,13 +455,6 @@ def predictions(n_clicks, criterion, splitter, max_depth, min_samples_split,
 
 
         return str(prediction[0])
-
-
-
-
-
-
-
 
 
 
