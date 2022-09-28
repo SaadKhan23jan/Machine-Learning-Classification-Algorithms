@@ -3,13 +3,12 @@ from dash import Dash, dcc, html, dash_table, ctx
 from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
 import pandas as pd
-from dash.exceptions import PreventUpdate
 
 import base64
 import datetime
 import io
 
-from Algorithms import decision_tree, train_decision_tree, get_dummy_variables
+from Algorithms import decision_tree, train_decision_tree, get_dummy_variables, eda_graph_plot
 
 # from upload_df import parse_contents
 # The following code was for df from local file on this machine
@@ -33,7 +32,7 @@ def parse_contents(contents, filename, date):
             df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
 
         elif 'xls' in filename:
-            # Assume that the user uploaded an excel file
+            # Assume that the user uploaded an Excel file
             df = pd.read_excel(io.BytesIO(decoded))
 
     except Exception as e:
@@ -64,7 +63,8 @@ encoded_image = base64.b64encode(open(image_filename, 'rb').read())
 
 app.layout = html.Div([
 
-    # This div container is for uploading file (uploaded when clicked the "Upload File" button
+    # This div container is for uploading file (uploaded when clicked the "Upload File" button)
+    # This is connected to "app.callback() 1"
     html.Div([
         dcc.Upload(id='upload-data',
                    children=html.Div(['Drag and Drop or ', html.A('Select a Single File')]),
@@ -81,6 +81,48 @@ app.layout = html.Div([
 
     ], style={'background': 'white'}),
     html.Br(),
+
+    # This Div is for Explanatory Data Analysis (EDA)
+    html.Div([
+        html.Label('Explanatory Data Analysis', style={'fontSize': '50px', 'fontWeight': 'bold'}),
+        html.Br(),
+        html.Button('Click to Generate Dropdown options', id='eda_gen_options'),
+
+        html.Div([
+            html.Label('Select X Feature', style={'width': '25%'}),
+            html.Label('Select y Feature', style={'width': '25%'}),
+            html.Label('Select Graph Type', style={'width': '25%'}),
+            html.Label('Click to Plot', style={'width': '25%'}),
+        ]),
+        html.Div([
+            dcc.Dropdown(id="x_axis_features", style={'width': '25%'}),
+            dcc.Dropdown(id="y_axis_features", style={'width': '25%'}),
+            dcc.Dropdown(id="graph_type", options=[{'label': 'Scatter', 'value': 'Scatter'},
+                                                   {'label': 'Line', 'value': 'Line'},
+                                                   {'label': 'Area', 'value': 'Area'},
+                                                   {'label': 'Bar', 'value': 'Bar'},
+                                                   {'label': 'Funnel', 'value': 'Funnel'},
+                                                   {'label': 'Timeline', 'value': 'Timeline'},
+                                                   {'label': 'Pie', 'value': 'Pie'},
+                                                   {'label': 'Subburst', 'value': 'Subburst'},
+                                                   {'label': 'Treemap', 'value': 'Treemap'},
+                                                   {'label': 'Icicle', 'value': 'Icicle'},
+                                                   {'label': 'Funnel Area', 'value': 'Funnel Area'},
+                                                   {'label': 'Histogram', 'value': 'Histogram'},
+                                                   {'label': 'Box', 'value': 'Box'},
+                                                   {'label': 'Violin', 'value': 'Violin'},
+                                                   {'label': 'Strip', 'value': 'Strip'},
+                                                   {'label': 'ECDF', 'value': 'ECDF'},
+                                                   {'label': 'Density Heatmap', 'value': 'Density Heatmap'},
+                                                   {'label': 'Density Contour', 'value': 'Density Contour'},
+                                                   {'label': 'Imshow', 'value': 'Imshow'}, ],
+                         value='Histogram', style={'width': '25%'}),
+            html.Button("Plot Graph", id="plot_graph"),
+        ], style={'display': 'flex'}),
+
+
+        dcc.Graph(id="eda_graph"),
+    ], style={'backgroundColor': 'Lightblue'}),
 
     # Thi div container is for taking action on the upload file for example, df.info, df.describe, df.isna, df.dropna
     html.Div([
@@ -106,7 +148,8 @@ app.layout = html.Div([
               'borderRadius': '10px', 'display': 'flex'}),
     html.Br(),
 
-    # This div container is for the results of obove options to print the Data Frame as per the chosen option
+    # This div container is for the results of above options to print the Data Frame as per the chosen option
+    # This is connected to "app.callback() 3" and # app.callback() 7 # can be one, will edit later
     html.Div(id='df_div',
              children=[
                  dash_table.DataTable(id='dataframe', style_table={'overflowX': 'auto'},
@@ -131,6 +174,7 @@ app.layout = html.Div([
 
         # Thi div is for selecting a Label, the Label list is created from the columns of the Data Frame
         # This list is generated when the button is clicked to generate, so it is connected to a callback
+        # It is connected to app.callback() 2
         html.Div([
             html.Label("Select the Label to Predict:",
                        style={'width': '50%', 'fontWeight': 'bold', 'paddingRight': '20px'}),
@@ -245,6 +289,7 @@ app.layout = html.Div([
               'borderRadius': '10px', 'display': 'flex'}),
 
     # This is a returned Data Frame from the Decision model and also connected to callback from the above div Yes/No
+    # app.callback() 4
     html.Div(id='df_feature_div',
              children=[
                  dash_table.DataTable(id='df_feature'),
@@ -262,13 +307,15 @@ app.layout = html.Div([
               'borderRadius': '10px', 'display': 'flex'}),
 
     # This is a returned confusion matrix from model and the function heatmap_plot_confusion_matrix
+    # app.callback() 5
     html.Div(id='show_cm_graph',
              children=[
                  dcc.Graph(id='confusion_matrix'),
              ], hidden=True),
     html.Br(),
 
-    # Same radio buttons as above for Feature Importance Data Frame and Confusion mMatrix
+    # Same radio buttons for DecisionTree Diagram as above for Feature Importance Data Frame and Confusion Matrix
+    # app.callback() 6
     html.Div([
         html.Label('Show Tree Structure', style={'fontSize': '20px', 'paddingRight': '20px'}),
         dcc.RadioItems(id='show_dt', options=[{'label': 'Yes', 'value': 'Yes'},
@@ -277,7 +324,7 @@ app.layout = html.Div([
     ], style={'background': '#f3f2f5', 'width': '25%', 'padding': '20px', 'border': '2px solid black',
               'borderRadius': '10px', 'display': 'flex'}),
 
-    # This div has the plot for Confusion Matrix
+    # This div has the plot for DecisionTree Diagram
     html.Div(id='show_dt_fig',
              children=[
                  html.Img(src='data:image/png;base64,{}'.format(encoded_image.decode())),
@@ -292,18 +339,14 @@ app.layout = html.Div([
                  ], style={'backgroundColor': 'Lightblue'}),
     html.Br(),
 
+    # This button if for training the model on whole data and then predict the value
+    html.Div([
+        dbc.Button('Train Model on All Data', id='train_model', n_clicks=0,
+                   style={'fontSize': '20px', 'fontWeight': 'bold'}),
+    ]),
+    html.Br(),
 
-    html.Label('Enter the values of all Features (as above dummy variables) separated by single white space',
-               style={'fontSize': '20px', 'fontWeight': 'bold'}),
-    html.Br(),
-    dcc.Input(id='input_features', type='text'),
-    html.Br(),
-    html.Br(),
-    dbc.Button('Train Model on All Data', id='train_model', n_clicks=0,
-               style={'fontSize': '20px', 'fontWeight': 'bold'}),
-    html.Br(),
-    html.Div(),
-
+    # This Div is for showing the results of the Predictions from the model
     html.Div([html.Label('Prediction with the Selected Parameters set: ',
                          style={'fontSize': '20px', 'fontWeight': 'bold', 'paddingRight': '10px'}),
               html.Div([
@@ -313,7 +356,7 @@ app.layout = html.Div([
                   html.Div(id='prediction'),
               ], style={'display': 'flex', 'border': '2px solid black', 'borderRadius': '10px'}),
               html.Br(),
-              html.Br(),],
+              html.Br(), ],
              style={'width': '50%', 'background': '#f3f2f5', 'fontSize': '20px', 'fontWeight': 'bold',
                     'paddingRight': '10px', 'paddingLeft': '200px', 'borderRadius': '50px'}),
 
@@ -321,40 +364,20 @@ app.layout = html.Div([
     html.Div(),
     html.Div(),
 
-    html.Button("CLick Here to generate input table", id="gen_inputs"),
-    dash_table.DataTable(
-        id='feature_input_table',
-        editable=True
-
-    )
-
 ], style={'background': 'Lightgreen'})
 
 
-@app.callback(Output("feature_input_table", "columns"),
-              Output("feature_input_table", "data"),
-              [Input("gen_inputs", "n_clicks"),
-               State('df_columns_dropdown_label', 'value'), ],
-              prevent_initial_call=True)
-def generate_inputs(n_clicks, df_columns_dropdown_label):
-
-    columns, data = get_dummy_variables(df, df_columns_dropdown_label)
-    # data = [{'input-data': i} for i in range(len(columns))]
-    raise PreventUpdate
-
-    return columns, data
-
-
-
-# This is for Uploading the csv file
+# This is for Uploading the csv file. it will only upload if the button is clicked
+# At the same time it will call the "parse_contents" function to make global Data Frame df
+# app.callback() 1
 @app.callback(
-              #Output('output-data-upload', 'children'),
+              # Output('output-data-upload', 'children'),
               Output('file_uploaded', 'children'),
               Input('upload_button', 'n_clicks'),
               State('upload-data', 'contents'),
               State('upload-data', 'filename'),
               State('upload-data', 'last_modified'),
-              prevent_initial_call=True)
+    prevent_initial_call=True)
 def upload_dataframe(n_clicks, content, filename, date):
 
     # print(type(df))#this will show data type as a pandas dataframe
@@ -362,22 +385,58 @@ def upload_dataframe(n_clicks, content, filename, date):
 
     if filename is not None:
         children = parse_contents(content, filename, date)
-        return f'{filename} is Uploaded Succesfully...'
-        #return children, f"{filename} File Uploaded Successfully"
+        return f'{filename} is Uploaded Successfully...'
+        # return children, f"{filename} File Uploaded Successfully"
     else:
         children = parse_contents(content, filename, date)
         return f'No File is Uploaded...'
-        #return children, f"No File is Uploaded"
+        # return children, f"No File is Uploaded"
 
 
+# This will create labels for EDA Analysis
+@app.callback(
+    Output('x_axis_features', 'options'),
+    Output('y_axis_features', 'options'),
+    Input('eda_gen_options', 'n_clicks'),
+    prevent_initial_call=True
+)
+def generate_labels_eda(click):
+    # create dummy DataFrame
+    # df = pd.DataFrame({f'col{i}': [1, 2, 3] for i in range(1, 5)})
+
+    # initiate list
+    options_for_dropdown = []
+    for idx, colum_name in enumerate(df.columns):
+        options_for_dropdown.append(
+            {
+                'label': colum_name,
+                'value': colum_name
+            }
+        )
+    return options_for_dropdown, options_for_dropdown
+
+
+# This app.callback() is for generating Graph
+@app.callback(Output('eda_graph', 'figure'),
+              [Input('plot_graph', 'n_clicks'),
+               State('x_axis_features', 'value'),
+               State('y_axis_features', 'value'),
+               State('graph_type', 'value')],
+              prevent_initial_call=True)
+def update_graph(n_clicks, x_axis_features, y_axis_features, graph_type):
+    return eda_graph_plot(df, x_axis_features, y_axis_features, graph_type)
+
+
+# This app.callback() generate list of dictionaries from the columns of the df
+# and returned it to the options of "df_columns_dropdown_label"
+# app.callback() 2
 @app.callback(
     Output('df_columns_dropdown_label', 'options'),
     Input('gen_dropdown', 'n_clicks'),
-    prevent_initial_call=True
-)
-def generate_labels(click):
+    prevent_initial_call=True)
+def generate_labels_pred(click):
     # create dummy DataFrame
-    #df = pd.DataFrame({f'col{i}': [1, 2, 3] for i in range(1, 5)})
+    # df = pd.DataFrame({f'col{i}': [1, 2, 3] for i in range(1, 5)})
 
     # initiate list
     options_for_dropdown = []
@@ -391,6 +450,8 @@ def generate_labels(click):
     return options_for_dropdown
 
 
+# This app.callback() is for showing the Data Frame as per the choice
+# app.callback() 3
 @app.callback(Output('df_div', 'hidden'),
               Input('show_df', 'value'),
               prevent_initial_call=True)
@@ -401,6 +462,8 @@ def df_div(show_df):
         return False
 
 
+# This app.callback() is for showing the Feature Importance Data Frame as per the choice
+# app.callback() 4
 @app.callback(Output('df_feature_div', 'hidden'),
               Input('show_df_feature', 'value'),
               prevent_initial_call=True)
@@ -411,6 +474,8 @@ def df_feature_div(show_df_feature):
         return False
 
 
+# This app.callback() is for showing the Confusion Matrix as per the choice
+# app.callback() 5
 @app.callback(Output('show_cm_graph', 'hidden'),
               Input('show_cm', 'value'),
               prevent_initial_call=True)
@@ -421,6 +486,8 @@ def cm_graph(show_cm):
         return True
 
 
+# This app.callback() is for showing the Decision Tree as per the choice
+# app.callback() 6
 @app.callback(Output('show_dt_fig', 'hidden'),
               Input('show_dt', 'value'),
               prevent_initial_call=True)
@@ -431,6 +498,8 @@ def cm_graph(show_cm):
         return True
 
 
+# This app.callback() is for showing the  Data Frame as per the choice
+# app.callback() 7
 @app.callback([Output('dataframe', 'data'),
                Output('dataframe', 'columns'), ],
               [Input('show_df_button', 'n_clicks'),
@@ -445,6 +514,13 @@ def show_dataframe(n_clicks, show_df):
         return df_table, df_columns
     else:
         return df_table, df_columns
+
+
+""" 
+    This app.callback() will split the data into Train-Test Split, print the Feature Importance, Confusion Matrix
+    and the Decision Tree, on this basis we will tune the Hyper parameters to increase the accuracy
+    can be checked from the confusion matrix
+"""
 
 
 @app.callback([Output('confusion_matrix', 'figure'),
@@ -474,22 +550,23 @@ def update_df(n_clicks, criterion, splitter, max_depth, min_samples_split,
     if max_depth == 0:
         max_depth = None
 
-    if df_columns_dropdown_label not in df.columns:
-        pass
-    else:
-        cm_fig, df_feature, dummy_features_df, dummy_features_df_columns\
-            = decision_tree(df, criterion, splitter, max_depth, min_samples_split, min_samples_leaf,
-                            min_weight_fraction_leaf, max_features, random_state, max_leaf_nodes,
-                            min_impurity_decrease, class_weight, ccp_alpha, df_columns_dropdown_label)
+    cm_fig, df_feature, dummy_features_df, dummy_features_df_columns\
+        = decision_tree(df, criterion, splitter, max_depth, min_samples_split, min_samples_leaf,
+                        min_weight_fraction_leaf, max_features, random_state, max_leaf_nodes,
+                        min_impurity_decrease, class_weight, ccp_alpha, df_columns_dropdown_label)
+
+    df_feature_columns = [{'name': col, 'id': col} for col in df_feature.columns]
+    df_feature_table = df_feature.to_dict(orient='records')
+
+    dummy_features_df_columns = [{'name': col, 'id': col} for col in dummy_features_df.columns]
+    dummy_features_df_table = dummy_features_df.to_dict(orient='records')
+
+    return cm_fig, df_feature_table, df_feature_columns, dummy_features_df_table, dummy_features_df_columns
 
 
-        df_feature_columns = [{'name': col, 'id': col} for col in df_feature.columns]
-        df_feature_table = df_feature.to_dict(orient='records')
-
-        dummy_features_df_columns = [{'name': col, 'id': col} for col in dummy_features_df.columns]
-        dummy_features_df_table = dummy_features_df.to_dict(orient='records')
-
-        return cm_fig, df_feature_table, df_feature_columns, dummy_features_df_table, dummy_features_df_columns
+"""
+    This app.callback() will train the model on all the data and then also predict the value
+"""
 
 
 @app.callback([Output('prediction', 'children'),
@@ -508,33 +585,30 @@ def update_df(n_clicks, criterion, splitter, max_depth, min_samples_split,
                State('class_weight', 'value'),
                State('ccp_alpha', 'value'),
                State('df_columns_dropdown_label', 'value'),
-               #State('input_features', 'value'),
+               # State('input_features', 'value'),
                State('dummy_feature', 'data'), ],
               prevent_initial_call=True, )
 def predictions(n_clicks, criterion, splitter, max_depth, min_samples_split, min_samples_leaf, min_weight_fraction_leaf,
                 max_features, random_state, max_leaf_nodes, min_impurity_decrease, class_weight, ccp_alpha,
                 df_columns_dropdown_label, input_features):
 
+    # These line will take the data from the cells, convert it into float and make list from it.
+    # It will be given as input for the prediction
     data_list = []
     for key, value in input_features[0].items():
         data_list.append(float(value))
-
     input_features = data_list
 
+    # if max_depth is 0, make it None for the model to run
     if max_depth == 0:
         max_depth = None
 
-    if df_columns_dropdown_label not in df.columns:
-        pass
-    else:
-        prediction = train_decision_tree(df, criterion, splitter, max_depth, min_samples_split, min_samples_leaf,
-                                         min_weight_fraction_leaf, max_features, random_state, max_leaf_nodes,
-                                         min_impurity_decrease, class_weight, ccp_alpha, df_columns_dropdown_label,
-                                         input_features)
+    prediction = train_decision_tree(df, criterion, splitter, max_depth, min_samples_split, min_samples_leaf,
+                                     min_weight_fraction_leaf, max_features, random_state, max_leaf_nodes,
+                                     min_impurity_decrease, class_weight, ccp_alpha, df_columns_dropdown_label,
+                                     input_features)
 
-
-        return str(prediction[0]), df_columns_dropdown_label
-
+    return str(prediction[0]), df_columns_dropdown_label
 
 
 if __name__ == "__main__":

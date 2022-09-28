@@ -8,7 +8,56 @@ from sklearn.tree import DecisionTreeClassifier
 import matplotlib.pyplot as plt
 from sklearn.tree import plot_tree
 import plotly.graph_objects as go
+import plotly.express as px
 import plotly.figure_factory as ff
+
+
+def eda_graph_plot(df, x_axis_features, y_axis_features, graph_type):
+
+    df = df.dropna()
+    if graph_type == "Scatter":
+        fig = px.scatter(data_frame=df, x=x_axis_features, y=y_axis_features)
+    elif graph_type == "Line":
+        fig = px.line(data_frame=df, x=x_axis_features, y=y_axis_features)
+    elif graph_type == 'Area':
+        fig = px.area(data_frame=df, x=x_axis_features, y=y_axis_features)
+    elif graph_type == 'Bar':
+        fig = px.bar(data_frame=df, x=x_axis_features, y=y_axis_features)
+    elif graph_type == 'Funnel':
+        fig = px.funnel(data_frame=df, x=x_axis_features, y=y_axis_features)
+    elif graph_type == 'Timeline':
+        fig = px.timeline(data_frame=df, x_start=x_axis_features, x_end=y_axis_features)
+    elif graph_type == 'Pie':
+        fig = px.pie(data_frame=df, names=df[x_axis_features], values=df[x_axis_features].values)
+    elif graph_type == 'Subburst':
+        fig = px.sunburst(data_frame=df, names=df[x_axis_features], values=df[x_axis_features].values)
+    elif graph_type == 'Treemap':
+        fig = px.treemap(data_frame=df, names=df[x_axis_features], values=df[x_axis_features].values)
+    elif graph_type == "Icicle":
+        fig = px.icicle(data_frame=df, names=df[x_axis_features], values=df[x_axis_features].values)
+    elif graph_type == "Funnel Area":
+        fig = px.funnel_area(data_frame=df, names=df[x_axis_features], values=df[x_axis_features].values)
+    elif graph_type == "Histogram":
+        fig = px.histogram(data_frame=df, x=x_axis_features, y=y_axis_features)
+    elif graph_type == "Box":
+        fig = px.box(data_frame=df, x=x_axis_features, y=y_axis_features)
+    elif graph_type == "Violin":
+        fig = px.violin(data_frame=df, x=x_axis_features, y=y_axis_features)
+    elif graph_type == "Strip":
+        fig = px.strip(data_frame=df, x=x_axis_features, y=y_axis_features)
+    elif graph_type == "ECDF":
+        fig = px.ecdf(data_frame=df, x=x_axis_features, y=y_axis_features)
+    elif graph_type == "Violin":
+        fig = px.violin(data_frame=df, x=x_axis_features, y=y_axis_features)
+    elif graph_type == "Density Heatmap":
+        fig = px.density_heatmap(data_frame=df, x=x_axis_features, y=y_axis_features)
+    elif graph_type == "Density Contour":
+        fig = px.density_contour(data_frame=df, x=x_axis_features, y=y_axis_features)
+    else:
+        fig = px.histogram(data_frame=df, x=x_axis_features, y=y_axis_features)
+
+
+    return fig
 
 
 def heatmap_plot_confusion_matrix(cm, labels, title="Confusion Matix"):
@@ -78,6 +127,7 @@ def ff_plot_confusion_matrix(z, x, y):
 
 
 def get_dummy_variables(df, df_columns_dropdown_label):
+    df = df.dropna()
     X = pd.get_dummies(df.drop(df_columns_dropdown_label, axis=1), drop_first=True)
     dummy_cols = X.columns
     col_dict = []
@@ -91,11 +141,12 @@ def get_dummy_variables(df, df_columns_dropdown_label):
     data.append(data_dict)
     return col_dict, data
 
+
 def decision_tree(df, criterion, splitter, max_depth, min_samples_split, min_samples_leaf, min_weight_fraction_leaf,
                   max_features, random_state, max_leaf_nodes, min_impurity_decrease, class_weight, ccp_alpha,
                   df_columns_dropdown_label):
 
-    # df = df.dropna()
+    df = df.dropna()
     X = pd.get_dummies(df.drop(df_columns_dropdown_label, axis=1), drop_first=True)
     y = df[df_columns_dropdown_label]
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=101)
