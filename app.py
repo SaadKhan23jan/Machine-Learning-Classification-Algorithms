@@ -3,6 +3,7 @@ from dash import Dash, dcc, html, dash_table, ctx
 from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
 import pandas as pd
+from plots import dt_graph
 
 import base64
 import datetime
@@ -83,6 +84,7 @@ app.layout = html.Div([
     html.Br(),
 
     # This Div is for Explanatory Data Analysis (EDA)
+    # This is connected to "app.callback() 2" and "app.callback() 3"
     html.Div([
         html.Label('Explanatory Data Analysis', style={'fontSize': '50px', 'fontWeight': 'bold'}),
         html.Br(),
@@ -137,6 +139,7 @@ app.layout = html.Div([
     html.Br(),
 
     # This div container is for options of hiding Data Frame, showing only head with 5 row on full Data Frame
+    # This is connected to app.callback() 9
     html.Div([
         html.Label('Show the DataFrame', style={'fontSize': '20px', 'paddingRight': '20px'}),
         dcc.RadioItems(id='show_df', options=[{'label': 'Full   ', 'value': 'Full'},
@@ -149,7 +152,7 @@ app.layout = html.Div([
     html.Br(),
 
     # This div container is for the results of above options to print the Data Frame as per the chosen option
-    # This is connected to "app.callback() 3" and # app.callback() 7 # can be one, will edit later
+    # This is connected to "app.callback() 5" and # app.callback() 9 # can be one, will edit later
     html.Div(id='df_div',
              children=[
                  dash_table.DataTable(id='dataframe', style_table={'overflowX': 'auto'},
@@ -174,7 +177,7 @@ app.layout = html.Div([
 
         # Thi div is for selecting a Label, the Label list is created from the columns of the Data Frame
         # This list is generated when the button is clicked to generate, so it is connected to a callback
-        # It is connected to app.callback() 2
+        # It is connected to app.callback() 4
         html.Div([
             html.Label("Select the Label to Predict:",
                        style={'width': '50%', 'fontWeight': 'bold', 'paddingRight': '20px'}),
@@ -289,7 +292,7 @@ app.layout = html.Div([
               'borderRadius': '10px', 'display': 'flex'}),
 
     # This is a returned Data Frame from the Decision model and also connected to callback from the above div Yes/No
-    # app.callback() 4
+    # app.callback() 6
     html.Div(id='df_feature_div',
              children=[
                  dash_table.DataTable(id='df_feature'),
@@ -307,7 +310,7 @@ app.layout = html.Div([
               'borderRadius': '10px', 'display': 'flex'}),
 
     # This is a returned confusion matrix from model and the function heatmap_plot_confusion_matrix
-    # app.callback() 5
+    # app.callback() 7
     html.Div(id='show_cm_graph',
              children=[
                  dcc.Graph(id='confusion_matrix'),
@@ -315,7 +318,7 @@ app.layout = html.Div([
     html.Br(),
 
     # Same radio buttons for DecisionTree Diagram as above for Feature Importance Data Frame and Confusion Matrix
-    # app.callback() 6
+    # app.callback() 8
     html.Div([
         html.Label('Show Tree Structure', style={'fontSize': '20px', 'paddingRight': '20px'}),
         dcc.RadioItems(id='show_dt', options=[{'label': 'Yes', 'value': 'Yes'},
@@ -327,6 +330,7 @@ app.layout = html.Div([
     # This div has the plot for DecisionTree Diagram
     html.Div(id='show_dt_fig',
              children=[
+                 dcc.Graph(id='dt_graph'),
                  html.Img(src='data:image/png;base64,{}'.format(encoded_image.decode())),
              ], hidden=True),
     html.Br(),
@@ -394,6 +398,7 @@ def upload_dataframe(n_clicks, content, filename, date):
 
 
 # This will create labels for EDA Analysis
+# app.callback() 2
 @app.callback(
     Output('x_axis_features', 'options'),
     Output('y_axis_features', 'options'),
@@ -417,6 +422,7 @@ def generate_labels_eda(click):
 
 
 # This app.callback() is for generating Graph
+# app.callback() 3
 @app.callback(Output('eda_graph', 'figure'),
               [Input('plot_graph', 'n_clicks'),
                State('x_axis_features', 'value'),
@@ -429,7 +435,7 @@ def update_graph(n_clicks, x_axis_features, y_axis_features, graph_type):
 
 # This app.callback() generate list of dictionaries from the columns of the df
 # and returned it to the options of "df_columns_dropdown_label"
-# app.callback() 2
+# app.callback() 4
 @app.callback(
     Output('df_columns_dropdown_label', 'options'),
     Input('gen_dropdown', 'n_clicks'),
@@ -451,7 +457,7 @@ def generate_labels_pred(click):
 
 
 # This app.callback() is for showing the Data Frame as per the choice
-# app.callback() 3
+# app.callback() 5
 @app.callback(Output('df_div', 'hidden'),
               Input('show_df', 'value'),
               prevent_initial_call=True)
@@ -463,7 +469,7 @@ def df_div(show_df):
 
 
 # This app.callback() is for showing the Feature Importance Data Frame as per the choice
-# app.callback() 4
+# app.callback() 6
 @app.callback(Output('df_feature_div', 'hidden'),
               Input('show_df_feature', 'value'),
               prevent_initial_call=True)
@@ -475,7 +481,7 @@ def df_feature_div(show_df_feature):
 
 
 # This app.callback() is for showing the Confusion Matrix as per the choice
-# app.callback() 5
+# app.callback() 7
 @app.callback(Output('show_cm_graph', 'hidden'),
               Input('show_cm', 'value'),
               prevent_initial_call=True)
@@ -487,7 +493,7 @@ def cm_graph(show_cm):
 
 
 # This app.callback() is for showing the Decision Tree as per the choice
-# app.callback() 6
+# app.callback() 8
 @app.callback(Output('show_dt_fig', 'hidden'),
               Input('show_dt', 'value'),
               prevent_initial_call=True)
@@ -499,7 +505,7 @@ def cm_graph(show_cm):
 
 
 # This app.callback() is for showing the  Data Frame as per the choice
-# app.callback() 7
+# app.callback() 9
 @app.callback([Output('dataframe', 'data'),
                Output('dataframe', 'columns'), ],
               [Input('show_df_button', 'n_clicks'),
@@ -523,7 +529,8 @@ def show_dataframe(n_clicks, show_df):
 """
 
 
-@app.callback([Output('confusion_matrix', 'figure'),
+@app.callback([Output('dt_graph', 'figure'),
+               Output('confusion_matrix', 'figure'),
                Output('df_feature', 'data'),
                Output('df_feature', 'columns'),
                Output('dummy_feature', 'data'),
@@ -550,7 +557,7 @@ def update_df(n_clicks, criterion, splitter, max_depth, min_samples_split,
     if max_depth == 0:
         max_depth = None
 
-    cm_fig, df_feature, dummy_features_df, dummy_features_df_columns\
+    cm_fig, df_feature, dummy_features_df, dummy_features_df_columns, dt_tree_graph\
         = decision_tree(df, criterion, splitter, max_depth, min_samples_split, min_samples_leaf,
                         min_weight_fraction_leaf, max_features, random_state, max_leaf_nodes,
                         min_impurity_decrease, class_weight, ccp_alpha, df_columns_dropdown_label)
@@ -561,7 +568,7 @@ def update_df(n_clicks, criterion, splitter, max_depth, min_samples_split,
     dummy_features_df_columns = [{'name': col, 'id': col} for col in dummy_features_df.columns]
     dummy_features_df_table = dummy_features_df.to_dict(orient='records')
 
-    return cm_fig, df_feature_table, df_feature_columns, dummy_features_df_table, dummy_features_df_columns
+    return dt_tree_graph, cm_fig, df_feature_table, df_feature_columns, dummy_features_df_table, dummy_features_df_columns
 
 
 """

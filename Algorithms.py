@@ -10,9 +10,18 @@ from sklearn.tree import plot_tree
 import plotly.graph_objects as go
 import plotly.express as px
 import plotly.figure_factory as ff
+from plots import dt_graph
 
 
 def eda_graph_plot(df, x_axis_features, y_axis_features, graph_type):
+
+    """
+    :param df: The Data Frame from the app.py
+    :param x_axis_features: The Feature for x-axis
+    :param y_axis_features: The Feature for y-axis
+    :param graph_type: The Graph type which is selected
+    :return: return on Graph type as fig
+    """
 
     df = df.dropna()
     if graph_type == "Scatter":
@@ -61,6 +70,13 @@ def eda_graph_plot(df, x_axis_features, y_axis_features, graph_type):
 
 
 def heatmap_plot_confusion_matrix(cm, labels, title="Confusion Matix"):
+
+    """ This function is not working so, it is not used
+    :param cm: This is coonfusion matrix
+    :param labels: list(df[df_columns_dropdown_label].unique()) the unique use in the label column
+    :param title: Title of the figure
+    :return: returns a fig
+    """
     data = go.Heatmap(z=cm, y=labels, x=labels)
     annotations = []
     for i, row in enumerate(cm):
@@ -86,6 +102,14 @@ def heatmap_plot_confusion_matrix(cm, labels, title="Confusion Matix"):
 
 
 def ff_plot_confusion_matrix(z, x, y):
+
+    """
+    call as: ff_plot_confusion_matrix(cm, df_columns_dropdown_label, df_columns_dropdown_label)
+    :param z: It is the confusion matrix
+    :param x: x and y are the same as unique values in the label column
+    :param y: same as x
+    :return: returns a fig
+    """
     # change each element of z to type string for annotations
     z_text = [[str(y) for y in x] for x in z]
 
@@ -127,6 +151,13 @@ def ff_plot_confusion_matrix(z, x, y):
 
 
 def get_dummy_variables(df, df_columns_dropdown_label):
+
+    """
+    This function is not used as I found to create dataframe and interactable data cells in the app.py program
+    :param df: The Data Frame
+    :param df_columns_dropdown_label: the columns of the Data Frame
+    :return: return list of dictionaries of columns and append data cells with all values as zero
+    """
     df = df.dropna()
     X = pd.get_dummies(df.drop(df_columns_dropdown_label, axis=1), drop_first=True)
     dummy_cols = X.columns
@@ -145,6 +176,25 @@ def get_dummy_variables(df, df_columns_dropdown_label):
 def decision_tree(df, criterion, splitter, max_depth, min_samples_split, min_samples_leaf, min_weight_fraction_leaf,
                   max_features, random_state, max_leaf_nodes, min_impurity_decrease, class_weight, ccp_alpha,
                   df_columns_dropdown_label):
+
+    """
+    These are the parameters for the Model to be trained
+    :param df:
+    :param criterion:
+    :param splitter:
+    :param max_depth:
+    :param min_samples_split:
+    :param min_samples_leaf:
+    :param min_weight_fraction_leaf:
+    :param max_features:
+    :param random_state:
+    :param max_leaf_nodes:
+    :param min_impurity_decrease:
+    :param class_weight:
+    :param ccp_alpha:
+    :param df_columns_dropdown_label:
+    :return:
+    """
 
     df = df.dropna()
     X = pd.get_dummies(df.drop(df_columns_dropdown_label, axis=1), drop_first=True)
@@ -177,12 +227,34 @@ def decision_tree(df, criterion, splitter, max_depth, min_samples_split, min_sam
     dummy_features_df = X[:1]
     dummy_features_df_columns = list(X.columns)
 
-    return fig, df_feature, dummy_features_df, dummy_features_df_columns
+    dt_tree_graph = dt_graph(df, model)
+
+    return fig, df_feature, dummy_features_df, dummy_features_df_columns, dt_tree_graph
 
 
 def train_decision_tree(df, criterion, splitter, max_depth, min_samples_split, min_samples_leaf,
                         min_weight_fraction_leaf, max_features, random_state, max_leaf_nodes,
                         min_impurity_decrease, class_weight, ccp_alpha, df_columns_dropdown_label, input_features):
+
+    """
+    This is the same as above function, but it will train the model on whole Data and also return Prediction
+    :param df:
+    :param criterion:
+    :param splitter:
+    :param max_depth:
+    :param min_samples_split:
+    :param min_samples_leaf:
+    :param min_weight_fraction_leaf:
+    :param max_features:
+    :param random_state:
+    :param max_leaf_nodes:
+    :param min_impurity_decrease:
+    :param class_weight:
+    :param ccp_alpha:
+    :param df_columns_dropdown_label:
+    :param input_features:
+    :return:
+    """
     X = pd.get_dummies(df.drop(df_columns_dropdown_label, axis=1), drop_first=True)
     y = df[df_columns_dropdown_label]
     model = DecisionTreeClassifier(criterion=criterion, splitter=splitter, max_depth=max_depth,
