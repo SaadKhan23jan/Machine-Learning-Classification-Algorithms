@@ -3,12 +3,13 @@ from dash import Dash, dcc, html, dash_table, ctx
 from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
 import pandas as pd
+from dash.exceptions import PreventUpdate
 
 import base64
 import datetime
 import io
 
-from Algorithms import decision_tree, train_decision_tree
+from Algorithms import decision_tree, train_decision_tree, get_dummy_variables
 
 # from upload_df import parse_contents
 
@@ -16,12 +17,12 @@ from Algorithms import decision_tree, train_decision_tree
 # df = df.dropna()
 # df = df[df['sex']!='.']
 
-
 def parse_contents(contents, filename, date):
     content_type, content_string = contents.split(',')
 
     # define data frame as global
     global df
+    global dict_col
     decoded = base64.b64decode(content_string)
     try:
         if 'csv' in filename:
@@ -119,9 +120,13 @@ app.layout = html.Div([
                                    'border': '2px solid black', 'borderRadius': '10px', 'display': 'flex'})),
         html.Br(),
 
+
         html.Div([
-            html.Label("Enter the Label Column Name:", style={'fontWeight': 'bold', 'paddingRight': '20px'}),
-            dcc.Input(id='labels', type='text', style={'width': '200px'}),
+            html.Label("Select the Label to Predict:",
+                       style={'width': '200px', 'fontWeight': 'bold', 'paddingRight': '20px'}),
+            dcc.Dropdown(id='df_columns_dropdown_label', style={'width': '100%'}),
+            html.Button('click to generate dropdown options', id='gen_dropdown',
+                        style={'borderRadius': '20px', 'backgroundColor': ''}),
         ], style={'background': '#f3f2f5', 'fontSize': '20px', 'width': '50%', 'padding': '20px',
                   'border': '2px solid black', 'borderRadius': '10px', 'display': 'flex'}),
         html.Br(),
@@ -146,25 +151,25 @@ app.layout = html.Div([
             html.Div([
                 html.Label('Max Depth', style={'fontWeight': 'bold'}),
                 html.Br(),
-                dcc.Input(id='max_depth', type='number', value=None, placeholder='default (None)'),
+                dcc.Input(id='max_depth', type='number', value=None, placeholder='default (None)', min=0),
             ], style={'width': '12%'}),
 
             html.Div([
                 html.Label('Min Sample Split', style={'fontWeight': 'bold'}),
                 html.Br(),
-                dcc.Input(id='min_samples_split', type='number', value=2),
+                dcc.Input(id='min_samples_split', type='number', value=2, min=0),
             ], style={'width': '12%'}),
 
             html.Div([
                 html.Label('Min Sample Leaf', style={'fontWeight': 'bold'}),
                 html.Br(),
-                dcc.Input(id='min_samples_leaf', type='number', value=1),
+                dcc.Input(id='min_samples_leaf', type='number', value=1, min=0),
             ], style={'width': '12%'}),
 
             html.Div([
                 html.Label('Min Weight Fraction Leaf', style={'fontWeight': 'bold'}),
                 html.Br(),
-                dcc.Input(id='min_weight_fraction_leaf', type='number', value=0),
+                dcc.Input(id='min_weight_fraction_leaf', type='number', value=0, min=0, max=0.5, step=0.001),
             ], style={'width': '12%'}),
 
             html.Div([
@@ -267,12 +272,12 @@ app.layout = html.Div([
 
     html.Div([
         html.Label('Data Frame with dummy variables', style={'fontSize': '20px', 'fontWeight': 'bold'}),
-        dash_table.DataTable(id='dummy_feature'),
+        dash_table.DataTable(id='dummy_feature', editable=True),
                  ], style={'backgroundColor': 'Lightblue'}),
     html.Br(),
 
 
-    html.Label('Enter the values of all Features separated by single white space',
+    html.Label('Enter the values of all Features (as above dummy variables) separated by single white space',
                style={'fontSize': '20px', 'fontWeight': 'bold'}),
     html.Br(),
     dcc.Input(id='input_features', type='text'),
@@ -285,7 +290,12 @@ app.layout = html.Div([
 
     html.Div([html.Label('Prediction with the Selected Parameters set: ',
                          style={'fontSize': '20px', 'fontWeight': 'bold', 'paddingRight': '10px'}),
-              html.Div(id='prediction'),
+              html.Div([
+                  html.Label("Prediction Label:"),
+                  html.Div(id='target_label', style={'paddingRight': '20px', 'paddingLeft': '20px'}),
+                  html.Label("Predicted Value:", style={'paddingRight': '20px'}),
+                  html.Div(id='prediction'),
+              ], style={'display': 'flex', 'border': '2px solid black', 'borderRadius': '10px'}),
               html.Br(),
               html.Br(),],
              style={'width': '50%', 'background': '#f3f2f5', 'fontSize': '20px', 'fontWeight': 'bold',
@@ -295,7 +305,29 @@ app.layout = html.Div([
     html.Div(),
     html.Div(),
 
+    html.Button("CLick Here to generate input table", id="gen_inputs"),
+    dash_table.DataTable(
+        id='feature_input_table',
+        editable=True
+
+    )
+
 ], style={'background': 'Lightgreen'})
+
+
+@app.callback(Output("feature_input_table", "columns"),
+              Output("feature_input_table", "data"),
+              [Input("gen_inputs", "n_clicks"),
+               State('df_columns_dropdown_label', 'value'), ],
+              prevent_initial_call=True)
+def generate_inputs(n_clicks, df_columns_dropdown_label):
+
+    columns, data = get_dummy_variables(df, df_columns_dropdown_label)
+    # data = [{'input-data': i} for i in range(len(columns))]
+    raise PreventUpdate
+
+    return columns, data
+
 
 
 # This is for Uploading the csv file
@@ -320,6 +352,27 @@ def upload_dataframe(n_clicks, content, filename, date):
         children = parse_contents(content, filename, date)
         return f'No File is Uploaded...'
         #return children, f"No File is Uploaded"
+
+
+@app.callback(
+    Output('df_columns_dropdown_label', 'options'),
+    Input('gen_dropdown', 'n_clicks'),
+    prevent_initial_call=True
+)
+def generate_labels(click):
+    # create dummy DataFrame
+    #df = pd.DataFrame({f'col{i}': [1, 2, 3] for i in range(1, 5)})
+
+    # initiate list
+    options_for_dropdown = []
+    for idx, colum_name in enumerate(df.columns):
+        options_for_dropdown.append(
+            {
+                'label': colum_name,
+                'value': colum_name
+            }
+        )
+    return options_for_dropdown
 
 
 @app.callback(Output('df_div', 'hidden'),
@@ -396,22 +449,23 @@ def show_dataframe(n_clicks, show_df):
                State('min_impurity_decrease', 'value'),
                State('class_weight', 'value'),
                State('ccp_alpha', 'value'),
-               State('labels', 'value'), ],
+               State('df_columns_dropdown_label', 'value'), ],
               prevent_initial_call=True, )
 def update_df(n_clicks, criterion, splitter, max_depth, min_samples_split,
               min_samples_leaf, min_weight_fraction_leaf, max_features, random_state, max_leaf_nodes,
-              min_impurity_decrease, class_weight, ccp_alpha, labels):
+              min_impurity_decrease, class_weight, ccp_alpha, df_columns_dropdown_label):
 
     if max_depth == 0:
         max_depth = None
 
-    if labels not in df.columns:
+    if df_columns_dropdown_label not in df.columns:
         pass
     else:
         cm_fig, df_feature, dummy_features_df, dummy_features_df_columns\
             = decision_tree(df, criterion, splitter, max_depth, min_samples_split, min_samples_leaf,
                             min_weight_fraction_leaf, max_features, random_state, max_leaf_nodes,
-                            min_impurity_decrease, class_weight, ccp_alpha, labels)
+                            min_impurity_decrease, class_weight, ccp_alpha, df_columns_dropdown_label)
+
 
         df_feature_columns = [{'name': col, 'id': col} for col in df_feature.columns]
         df_feature_table = df_feature.to_dict(orient='records')
@@ -422,7 +476,8 @@ def update_df(n_clicks, criterion, splitter, max_depth, min_samples_split,
         return cm_fig, df_feature_table, df_feature_columns, dummy_features_df_table, dummy_features_df_columns
 
 
-@app.callback(Output('prediction', 'children'),
+@app.callback([Output('prediction', 'children'),
+               Output('target_label', 'children'), ],
               [Input('train_model', 'n_clicks'),
                State('criterion', 'value'),
                State('splitter', 'value'),
@@ -436,25 +491,33 @@ def update_df(n_clicks, criterion, splitter, max_depth, min_samples_split,
                State('min_impurity_decrease', 'value'),
                State('class_weight', 'value'),
                State('ccp_alpha', 'value'),
-               State('labels', 'value'),
-               State('input_features', 'value'), ],
+               State('df_columns_dropdown_label', 'value'),
+               #State('input_features', 'value'),
+               State('dummy_feature', 'data'), ],
               prevent_initial_call=True, )
 def predictions(n_clicks, criterion, splitter, max_depth, min_samples_split, min_samples_leaf, min_weight_fraction_leaf,
-                max_features, random_state, max_leaf_nodes, min_impurity_decrease, class_weight, ccp_alpha, labels,
-                input_features):
+                max_features, random_state, max_leaf_nodes, min_impurity_decrease, class_weight, ccp_alpha,
+                df_columns_dropdown_label, input_features):
+
+    data_list = []
+    for key, value in input_features[0].items():
+        data_list.append(float(value))
+
+    input_features = data_list
 
     if max_depth == 0:
         max_depth = None
 
-    if labels not in df.columns:
+    if df_columns_dropdown_label not in df.columns:
         pass
     else:
         prediction = train_decision_tree(df, criterion, splitter, max_depth, min_samples_split, min_samples_leaf,
                                          min_weight_fraction_leaf, max_features, random_state, max_leaf_nodes,
-                                         min_impurity_decrease, class_weight, ccp_alpha, labels, input_features)
+                                         min_impurity_decrease, class_weight, ccp_alpha, df_columns_dropdown_label,
+                                         input_features)
 
 
-        return str(prediction[0])
+        return str(prediction[0]), df_columns_dropdown_label
 
 
 
