@@ -12,10 +12,13 @@ import io
 from Algorithms import decision_tree, train_decision_tree, get_dummy_variables
 
 # from upload_df import parse_contents
-
+# The following code was for df from local file on this machine
 # df = pd.read_csv('penguins_size.csv')
 # df = df.dropna()
 # df = df[df['sex']!='.']
+
+# This function create Pandas DataFrame from the uploaded file and make it global
+
 
 def parse_contents(contents, filename, date):
     content_type, content_string = contents.split(',')
@@ -45,9 +48,6 @@ def parse_contents(contents, filename, date):
         dict_col.append({'label': col, 'value': col})
 
 
-
-
-
 css_sheet = [dbc.themes.COSMO]
 BS = "https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
 app = Dash(__name__, external_stylesheets=css_sheet)
@@ -57,28 +57,32 @@ app.title = "Machine Learning Classifications"
 server = app.server
 
 
-
+# Here we will upload the image created from DecisionTree
 image_filename = 'dt_tree.png'
 encoded_image = base64.b64encode(open(image_filename, 'rb').read())
 
 
 app.layout = html.Div([
 
+    # This div container is for uploading file (uploaded when clicked the "Upload File" button
     html.Div([
         dcc.Upload(id='upload-data',
                    children=html.Div(['Drag and Drop or ', html.A('Select a Single File')]),
                    style={'width': '100%', 'height': '60px', 'lineHeight': '60px', 'borderWidth': '1px',
                           'borderStyle': 'dashed', 'borderRadius': '5px', 'textAlign': 'center', 'margin': '10px' },
-                   # Allow multiple files to be uploaded
+                   # Do not allow multiple files to upload
                    multiple=False
                    ),
-        #html.Div(id='output-data-upload', hidden=True),
+        # The below line is for if we want to show the uploaded file as Data Table
+        # html.Div(id='output-data-upload', hidden=True),
         dbc.Button('Upload File', id='upload_button'),
         html.Br(),
         html.Output(id='file_uploaded'),
 
     ], style={'background': 'white'}),
+    html.Br(),
 
+    # Thi div container is for taking action on the upload file for example, df.info, df.describe, df.isna, df.dropna
     html.Div([
         html.Label('Select an Action to perform', style={'fontSize': '20px'}),
         dcc.Dropdown(id='df_actions', options=[{'label': 'Information', 'value': 'Information'},
@@ -86,10 +90,11 @@ app.layout = html.Div([
                                             {'label': 'Drop NA', 'value': 'Drop NA'},
                                             {'label': 'Head', 'value': 'Head'}]),
         dash_table.DataTable(id='df_actions_output'),
-    ], style={'background': '#f3f2f5', 'width': '25%', 'padding': '20px', 'border': '2px solid black',
+    ], style={'background': '#f3f2f5', 'width': '50%', 'padding': '20px', 'border': '2px solid black',
               'borderRadius': '10px'}),
     html.Br(),
 
+    # This div container is for options of hiding Data Frame, showing only head with 5 row on full Data Frame
     html.Div([
         html.Label('Show the DataFrame', style={'fontSize': '20px', 'paddingRight': '20px'}),
         dcc.RadioItems(id='show_df', options=[{'label': 'Full   ', 'value': 'Full'},
@@ -97,10 +102,11 @@ app.layout = html.Div([
                                               {'label': 'No', 'value': 'No'}, ],
                        value='No', style={'fontSize': '20px'}, inputStyle={'marginRight': '10px'}),
         dbc.Button('Show', id='show_df_button', n_clicks=0, style={'fontSize': '20px'})
-    ], style={'background': '#f3f2f5', 'width': '25%', 'padding': '20px', 'border': '2px solid black',
+    ], style={'background': '#f3f2f5', 'width': '50%', 'padding': '20px', 'border': '2px solid black',
               'borderRadius': '10px', 'display': 'flex'}),
     html.Br(),
 
+    # This div container is for the results of obove options to print the Data Frame as per the chosen option
     html.Div(id='df_div',
              children=[
                  dash_table.DataTable(id='dataframe', style_table={'overflowX': 'auto'},
@@ -114,23 +120,28 @@ app.layout = html.Div([
              ], hidden=True),
     html.Br(),
 
+    # This Div has many divs inside and is for selecting variety of parameters for training the model
     html.Div([
+
+        # This is just one div for printing the label "Select Set of Parameters"
         html.Div(html.Label("Select Set of Parameters",
-                            style={'background': '#f3f2f5', 'fontSize': '20px', 'width': '25%', 'padding': '20px',
+                            style={'background': '#f3f2f5', 'fontSize': '20px', 'width': '50%', 'padding': '20px',
                                    'border': '2px solid black', 'borderRadius': '10px', 'display': 'flex'})),
         html.Br(),
 
-
+        # Thi div is for selecting a Label, the Label list is created from the columns of the Data Frame
+        # This list is generated when the button is clicked to generate, so it is connected to a callback
         html.Div([
             html.Label("Select the Label to Predict:",
-                       style={'width': '200px', 'fontWeight': 'bold', 'paddingRight': '20px'}),
-            dcc.Dropdown(id='df_columns_dropdown_label', style={'width': '100%'}),
+                       style={'width': '50%', 'fontWeight': 'bold', 'paddingRight': '20px'}),
+            dcc.Dropdown(id='df_columns_dropdown_label', style={'width': '80%'}),
             html.Button('click to generate dropdown options', id='gen_dropdown',
                         style={'borderRadius': '20px', 'backgroundColor': ''}),
         ], style={'background': '#f3f2f5', 'fontSize': '20px', 'width': '50%', 'padding': '20px',
                   'border': '2px solid black', 'borderRadius': '10px', 'display': 'flex'}),
         html.Br(),
 
+        # This div has one div inside for each parameter
         html.Div([
             html.Div([
                 html.Label('Criterion', style={'fontWeight': 'bold'}),
@@ -184,6 +195,7 @@ app.layout = html.Div([
         ], style={'background': 'Lightblue', 'display': 'flex'}),
         html.Br(),
 
+        # This div has one div inside for each parameter in addition to the above
         html.Div([
             html.Div([
                 html.Label('Random State', style={'fontWeight': 'bold'}),
@@ -216,14 +228,14 @@ app.layout = html.Div([
         ], style={'background': 'Lightblue', 'display': 'flex'}),
         html.Br(),
 
+        # This button runs the calculations, so it is connected to a callback and runs the calculations
         dbc.Button('Run DecisionTree', id='run_dt', n_clicks=0, style={'fontSize': '20px'}),
         html.Br(),
         html.Br(),
 
-
-
     ]),
 
+    # This div has radio button, if Yes, then it will show Data Frame of feature importance
     html.Div([
         html.Label('Show the Feature Importance', style={'fontSize': '20px', 'paddingRight': '20px'}),
         dcc.RadioItems(id='show_df_feature', options=[{'label': 'Yes', 'value': 'Yes'},
@@ -232,13 +244,14 @@ app.layout = html.Div([
     ], style={'background': '#f3f2f5', 'width': '25%', 'padding': '20px', 'border': '2px solid black',
               'borderRadius': '10px', 'display': 'flex'}),
 
+    # This is a returned Data Frame from the Decision model and also connected to callback from the above div Yes/No
     html.Div(id='df_feature_div',
              children=[
                  dash_table.DataTable(id='df_feature'),
              ], hidden=True),
     html.Br(),
 
-
+    # This is almost the same div for confusion matrix as above for feature importance
     html.Div([
         html.Label('Show Confusion Matrix Figure', style={'fontSize': '20px', 'paddingRight': '20px'}),
         dcc.RadioItems(id='show_cm', options=[{'label': 'Yes', 'value': 'Yes'},
@@ -248,12 +261,14 @@ app.layout = html.Div([
     ], style={'background': '#f3f2f5', 'width': '25%', 'padding': '20px', 'border': '2px solid black',
               'borderRadius': '10px', 'display': 'flex'}),
 
+    # This is a returned confusion matrix from model and the function heatmap_plot_confusion_matrix
     html.Div(id='show_cm_graph',
              children=[
                  dcc.Graph(id='confusion_matrix'),
              ], hidden=True),
     html.Br(),
 
+    # Same radio buttons as above for Feature Importance Data Frame and Confusion mMatrix
     html.Div([
         html.Label('Show Tree Structure', style={'fontSize': '20px', 'paddingRight': '20px'}),
         dcc.RadioItems(id='show_dt', options=[{'label': 'Yes', 'value': 'Yes'},
@@ -261,17 +276,18 @@ app.layout = html.Div([
                        value='No', style={'fontSize': '20px'}, inputStyle={'marginRight': '10px'}),
     ], style={'background': '#f3f2f5', 'width': '25%', 'padding': '20px', 'border': '2px solid black',
               'borderRadius': '10px', 'display': 'flex'}),
-    html.Br(),
 
+    # This div has the plot for Confusion Matrix
     html.Div(id='show_dt_fig',
              children=[
                  html.Img(src='data:image/png;base64,{}'.format(encoded_image.decode())),
              ], hidden=True),
     html.Br(),
 
-
+    # This table appears once the model is trained, it is editable
+    # The values from these cells are converted into list in the call back and input into the model.predict
     html.Div([
-        html.Label('Data Frame with dummy variables', style={'fontSize': '20px', 'fontWeight': 'bold'}),
+        html.Label('Enter These variables values for Prediction', style={'fontSize': '20px', 'fontWeight': 'bold'}),
         dash_table.DataTable(id='dummy_feature', editable=True),
                  ], style={'backgroundColor': 'Lightblue'}),
     html.Br(),
