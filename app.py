@@ -9,7 +9,7 @@ import base64
 import datetime
 import io
 
-from Algorithms import decision_tree, train_decision_tree, get_dummy_variables, eda_graph_plot
+from Algorithms import decision_tree, train_decision_tree, get_dummy_variables, eda_graph_plot, model_prediction
 
 # from upload_df import parse_contents
 # The following code was for df from local file on this machine
@@ -335,6 +335,31 @@ app.layout = html.Div([
              ], hidden=True),
     html.Br(),
 
+    # This button is for training the model on whole data and then predict the value
+    html.Div([
+        dbc.Button('Train Model on All Data', id='train_model', n_clicks=0,
+                   style={'fontSize': '20px', 'fontWeight': 'bold'}),
+        html.P("Model Not Trained", id="message", style={'fontWeight': 'bold', 'padding': '20px'}),
+    ], style={'display': 'flex'}),
+    html.Br(),
+
+    # This div has radio button, if Yes, then it will show Data Frame of feature importance
+    html.Div([
+        html.Label('Show the Feature Importance of Trained Model', style={'fontSize': '20px', 'paddingRight': '20px'}),
+        dcc.RadioItems(id='show_df_feature_trained', options=[{'label': 'Yes', 'value': 'Yes'},
+                                                      {'label': 'No', 'value': 'No'}],
+                       value='No', style={'fontSize': '20px'}, inputStyle={'marginRight': '10px'}),
+    ], style={'background': '#f3f2f5', 'width': '25%', 'padding': '20px', 'border': '2px solid black',
+              'borderRadius': '10px', 'display': 'flex'}),
+
+    # This is a returned Data Frame from the Decision model and also connected to callback from the above div Yes/No
+    # app.callback() 10
+    html.Div(id='df_feature_div_trained',
+             children=[
+                 dash_table.DataTable(id='df_feature_trained'),
+             ], hidden=False),
+    html.Br(),
+
     # This table appears once the model is trained, it is editable
     # The values from these cells are converted into list in the call back and input into the model.predict
     html.Div([
@@ -343,12 +368,16 @@ app.layout = html.Div([
                  ], style={'backgroundColor': 'Lightblue'}),
     html.Br(),
 
-    # This button if for training the model on whole data and then predict the value
+    # This button is now only for prediction and is separated for training model on all data again and again
+    # Model will be trained separately once, and this button will only do the prediction quickly
+    # The values from these cells are converted into list in the call back and input into the model.predict
     html.Div([
-        dbc.Button('Train Model on All Data', id='train_model', n_clicks=0,
+        dbc.Button('Click to Predict', id='prediction_button', n_clicks=0,
                    style={'fontSize': '20px', 'fontWeight': 'bold'}),
     ]),
     html.Br(),
+
+
 
     # This Div is for showing the results of the Predictions from the model
     html.Div([html.Label('Prediction with the Selected Parameters set: ',
@@ -522,6 +551,18 @@ def show_dataframe(n_clicks, show_df):
         return df_table, df_columns
 
 
+# app.callback() 10
+@app.callback(Output('df_feature_div_trained', 'hidden'),
+              Input('show_df_feature_trained', 'value'),
+              prevent_initial_call=True)
+def df_feature_div(show_df_feature_trained):
+    if show_df_feature_trained == "No":
+        return True
+    else:
+        return False
+
+
+
 """ 
     This app.callback() will split the data into Train-Test Split, print the Feature Importance, Confusion Matrix
     and the Decision Tree, on this basis we will tune the Hyper parameters to increase the accuracy
@@ -550,7 +591,7 @@ def show_dataframe(n_clicks, show_df):
                State('ccp_alpha', 'value'),
                State('df_columns_dropdown_label', 'value'), ],
               prevent_initial_call=True, )
-def update_df(n_clicks, criterion, splitter, max_depth, min_samples_split,
+def run_decision_tree(n_clicks, criterion, splitter, max_depth, min_samples_split,
               min_samples_leaf, min_weight_fraction_leaf, max_features, random_state, max_leaf_nodes,
               min_impurity_decrease, class_weight, ccp_alpha, df_columns_dropdown_label):
 
@@ -577,8 +618,12 @@ def update_df(n_clicks, criterion, splitter, max_depth, min_samples_split,
 
 
 @app.callback([Output('prediction', 'children'),
-               Output('target_label', 'children'), ],
+               Output('target_label', 'children'),
+               Output('message', 'children'),
+               Output('df_feature_trained', 'data'),
+               Output('df_feature_trained', 'columns'), ],
               [Input('train_model', 'n_clicks'),
+               Input('prediction_button', 'n_clicks'),
                State('criterion', 'value'),
                State('splitter', 'value'),
                State('max_depth', 'value'),
@@ -595,9 +640,11 @@ def update_df(n_clicks, criterion, splitter, max_depth, min_samples_split,
                # State('input_features', 'value'),
                State('dummy_feature', 'data'), ],
               prevent_initial_call=True, )
-def predictions(n_clicks, criterion, splitter, max_depth, min_samples_split, min_samples_leaf, min_weight_fraction_leaf,
+def predictions(n_clicks_train_model, n_clicks_prediction_button, criterion, splitter, max_depth, min_samples_split, min_samples_leaf, min_weight_fraction_leaf,
                 max_features, random_state, max_leaf_nodes, min_impurity_decrease, class_weight, ccp_alpha,
                 df_columns_dropdown_label, input_features):
+
+    triggered_id = ctx.triggered_id
 
     # These line will take the data from the cells, convert it into float and make list from it.
     # It will be given as input for the prediction
@@ -610,12 +657,29 @@ def predictions(n_clicks, criterion, splitter, max_depth, min_samples_split, min
     if max_depth == 0:
         max_depth = None
 
-    prediction = train_decision_tree(df, criterion, splitter, max_depth, min_samples_split, min_samples_leaf,
+    """prediction = train_decision_tree(df, criterion, splitter, max_depth, min_samples_split, min_samples_leaf,
                                      min_weight_fraction_leaf, max_features, random_state, max_leaf_nodes,
                                      min_impurity_decrease, class_weight, ccp_alpha, df_columns_dropdown_label,
                                      input_features)
+                                     
+        These three outputs must be global, because it must be available for output in case "prediction_button is
+        clicked, otherwise it will create error
+    """
+    if triggered_id == 'train_model':
+        global trained_model # I made it gloabl so that it is available for return in both condition, else creates error
+        global df_feature_trained_columns
+        global df_feature_trained_table
+        trained_model, df_feature_trained = train_decision_tree(df, criterion, splitter, max_depth, min_samples_split, min_samples_leaf,
+                                         min_weight_fraction_leaf, max_features, random_state, max_leaf_nodes,
+                                         min_impurity_decrease, class_weight, ccp_alpha, df_columns_dropdown_label)
 
-    return str(prediction[0]), df_columns_dropdown_label
+        df_feature_trained_columns = [{'name': col, 'id': col} for col in df_feature_trained.columns]
+        df_feature_trained_table = df_feature_trained.to_dict(orient='records')
+
+        return "No Label Available", "No Prediction Available", f"Model Trained {n_clicks_train_model} times", df_feature_trained_table, df_feature_trained_columns
+    elif triggered_id == 'prediction_button':
+        prediction = model_prediction(trained_model, input_features)
+        return str(prediction[0]), df_columns_dropdown_label, f"Model Trained {n_clicks_train_model} times", df_feature_trained_table, df_feature_trained_columns
 
 
 if __name__ == "__main__":

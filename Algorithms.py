@@ -65,7 +65,6 @@ def eda_graph_plot(df, x_axis_features, y_axis_features, graph_type):
     else:
         fig = px.histogram(data_frame=df, x=x_axis_features, y=y_axis_features)
 
-
     return fig
 
 
@@ -209,18 +208,18 @@ def decision_tree(df, criterion, splitter, max_depth, min_samples_split, min_sam
     model.fit(X_train, y_train)
     base_pred = model.predict(X_test)
 
-    cm = confusion_matrix(y_test,base_pred)
+    cm = confusion_matrix(y_test, base_pred)
     df_columns_dropdown_label = list(df[df_columns_dropdown_label].unique())
     fig = ff_plot_confusion_matrix(cm, df_columns_dropdown_label, df_columns_dropdown_label)
 
-    plt.figure(figsize=(12, 8),dpi=150)
+    plt.figure(figsize=(12, 8), dpi=150)
     plot_tree(model)
-    plt.savefig('dt_tree',filled=True,feature_names=X.columns)
+    plt.savefig('dt_tree', filled=True, feature_names=X.columns)
 
     data = model.feature_importances_
     data = data.round(3)
 
-    df_feature = pd.DataFrame(index=X.columns,data=data).reset_index()
+    df_feature = pd.DataFrame(index=X.columns, data=data).reset_index()
     df_feature.columns = ['Feature Name', 'Feature Importance']
     df_feature = df_feature.sort_values(by='Feature Importance', ascending=False)
 
@@ -234,7 +233,7 @@ def decision_tree(df, criterion, splitter, max_depth, min_samples_split, min_sam
 
 def train_decision_tree(df, criterion, splitter, max_depth, min_samples_split, min_samples_leaf,
                         min_weight_fraction_leaf, max_features, random_state, max_leaf_nodes,
-                        min_impurity_decrease, class_weight, ccp_alpha, df_columns_dropdown_label, input_features):
+                        min_impurity_decrease, class_weight, ccp_alpha, df_columns_dropdown_label):
 
     """
     This is the same as above function, but it will train the model on whole Data and also return Prediction
@@ -264,11 +263,25 @@ def train_decision_tree(df, criterion, splitter, max_depth, min_samples_split, m
                                    min_impurity_decrease=min_impurity_decrease, class_weight=class_weight,
                                    ccp_alpha=ccp_alpha)
     model.fit(X, y)
-    #input_features = input_features.split(" ")
-    #input_features = [float(x) for x in input_features]
 
+    data = model.feature_importances_
+    data = data.round(3)
+
+    df_feature_trained = pd.DataFrame(index=X.columns,data=data).reset_index()
+    df_feature_trained.columns = ['Feature Name', 'Feature Importance']
+    df_feature_trained = df_feature_trained.sort_values(by='Feature Importance', ascending=False)
+
+    # input_features = input_features.split(" ")
+    # input_features = [float(x) for x in input_features]
+
+
+    # prediction = model.predict([input_features])
+
+    # return prediction
+    return model, df_feature_trained
+
+
+def model_prediction(model, input_features):
 
     prediction = model.predict([input_features])
-
     return prediction
-
