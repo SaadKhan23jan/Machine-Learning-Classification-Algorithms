@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
 from sklearn.metrics import confusion_matrix, classification_report, plot_confusion_matrix
 from sklearn.tree import DecisionTreeClassifier
 import matplotlib.pyplot as plt
@@ -13,63 +14,115 @@ import plotly.figure_factory as ff
 from plots import dt_graph
 
 
-def eda_graph_plot(df, x_axis_features, y_axis_features, graph_type):
-
+def eda_graph_plot(df, x_axis_features=None, y_axis_features=None, graph_type=None, color=None, symbol=None, size=None,
+                   hover_name=None, hover_data=None, custom_data=None, text=None, facet_row=None, facet_col=None,
+                   orientation=None, width=None, height=None, sort_by=None):
     """
+
     :param df: The Data Frame from the app.py
     :param x_axis_features: The Feature for x-axis
     :param y_axis_features: The Feature for y-axis
     :param graph_type: The Graph type which is selected
+    :param color:
+    :param symbol:
+    :param size:
+    :param hover_name:
+    :param hover_data:
+    :param custom_data:
+    :param text:
+    :param facet_row:
+    :param facet_col:
+    :param orientation:
+    :param width:
+    :param height:
     :return: return on Graph type as fig
+    :param sort_by: it sorts the dataframe by that column (by Ascending only)
     """
+
+    if sort_by != None:
+        df = df.sort_values(sort_by)
 
     df = df.dropna()
     if graph_type == "Scatter":
-        fig = px.scatter(data_frame=df, x=x_axis_features, y=y_axis_features)
+        fig = px.scatter(data_frame=df, x=x_axis_features, y=y_axis_features, color=color, symbol=symbol, size=size,
+                         hover_name=hover_name, hover_data=hover_data, custom_data=custom_data, text=text,
+                         facet_row=facet_row, facet_col=facet_col, orientation=orientation)
     elif graph_type == "Line":
-        fig = px.line(data_frame=df, x=x_axis_features, y=y_axis_features)
+        fig = px.line(data_frame=df, x=x_axis_features, y=y_axis_features, color=color, symbol=symbol,
+                      hover_name=hover_name, hover_data=hover_data, custom_data=custom_data, text=text,
+                      facet_row=facet_row, facet_col=facet_col, orientation=orientation)
     elif graph_type == 'Area':
-        fig = px.area(data_frame=df, x=x_axis_features, y=y_axis_features)
+        fig = px.area(data_frame=df, x=x_axis_features, y=y_axis_features, color=color, symbol=symbol,
+                      hover_name=hover_name, hover_data=hover_data, custom_data=custom_data, text=text,
+                      facet_row=facet_row, facet_col=facet_col, orientation=orientation)
     elif graph_type == 'Bar':
-        fig = px.bar(data_frame=df, x=x_axis_features, y=y_axis_features)
+        fig = px.bar(data_frame=df, x=x_axis_features, y=y_axis_features, color=color, hover_name=hover_name,
+                     hover_data=hover_data, custom_data=custom_data, text=text, facet_row=facet_row,
+                     facet_col=facet_col, orientation=orientation)
     elif graph_type == 'Funnel':
-        fig = px.funnel(data_frame=df, x=x_axis_features, y=y_axis_features)
+        fig = px.funnel(data_frame=df, x=x_axis_features, y=y_axis_features, color=color, hover_name=hover_name,
+                        hover_data=hover_data, custom_data=custom_data, text=text, facet_row=facet_row,
+                        facet_col=facet_col, orientation=orientation)
     elif graph_type == 'Timeline':
-        fig = px.timeline(data_frame=df, x_start=x_axis_features, x_end=y_axis_features)
+        fig = px.timeline(data_frame=df, x_start=x_axis_features, x_end=y_axis_features, color=color,
+                          hover_name=hover_name, hover_data=hover_data, custom_data=custom_data, text=text,
+                          facet_row=facet_row, facet_col=facet_col)
     elif graph_type == 'Pie':
-        fig = px.pie(data_frame=df, names=df[x_axis_features], values=df[x_axis_features].values)
+        fig = px.pie(data_frame=df, names=df[x_axis_features], values=df[x_axis_features].values, color=color,
+                     hover_name=hover_name, hover_data=hover_data, custom_data=custom_data)
     elif graph_type == 'Subburst':
-        fig = px.sunburst(data_frame=df, names=df[x_axis_features], values=df[x_axis_features].values)
+        fig = px.sunburst(data_frame=df, names=df[x_axis_features], values=df[x_axis_features].values, color=color,
+                          hover_name=hover_name, hover_data=hover_data, custom_data=custom_data)
     elif graph_type == 'Treemap':
-        fig = px.treemap(data_frame=df, names=df[x_axis_features], values=df[x_axis_features].values)
+        fig = px.treemap(data_frame=df, names=df[x_axis_features], values=df[x_axis_features].values, color=color,
+                         hover_name=hover_name, hover_data=hover_data, custom_data=custom_data)
     elif graph_type == "Icicle":
-        fig = px.icicle(data_frame=df, names=df[x_axis_features], values=df[x_axis_features].values)
+        fig = px.icicle(data_frame=df, names=df[x_axis_features], values=df[x_axis_features].values, color=color,
+                        hover_name=hover_name, hover_data=hover_data, custom_data=custom_data)
     elif graph_type == "Funnel Area":
-        fig = px.funnel_area(data_frame=df, names=df[x_axis_features], values=df[x_axis_features].values)
+        fig = px.funnel_area(data_frame=df, names=df[x_axis_features], values=df[x_axis_features].values, color=color,
+                             hover_name=hover_name, hover_data=hover_data, custom_data=custom_data)
     elif graph_type == "Histogram":
-        fig = px.histogram(data_frame=df, x=x_axis_features, y=y_axis_features)
+        fig = px.histogram(data_frame=df, x=x_axis_features, y=y_axis_features, color=color, hover_name=hover_name,
+                           hover_data=hover_data, facet_row=facet_row, facet_col=facet_col, orientation=orientation)
     elif graph_type == "Box":
-        fig = px.box(data_frame=df, x=x_axis_features, y=y_axis_features)
+        fig = px.box(data_frame=df, x=x_axis_features, y=y_axis_features, color=color, hover_name=hover_name,
+                     hover_data=hover_data, custom_data=custom_data, facet_row=facet_row, facet_col=facet_col,
+                     orientation=orientation)
     elif graph_type == "Violin":
-        fig = px.violin(data_frame=df, x=x_axis_features, y=y_axis_features)
+        fig = px.violin(data_frame=df, x=x_axis_features, y=y_axis_features, color=color, hover_name=hover_name,
+                        hover_data=hover_data, custom_data=custom_data, facet_row=facet_row, facet_col=facet_col,
+                        orientation=orientation)
     elif graph_type == "Strip":
-        fig = px.strip(data_frame=df, x=x_axis_features, y=y_axis_features)
+        fig = px.strip(data_frame=df, x=x_axis_features, y=y_axis_features, color=color, hover_name=hover_name,
+                       hover_data=hover_data, custom_data=custom_data, facet_row=facet_row, facet_col=facet_col,
+                       orientation=orientation)
     elif graph_type == "ECDF":
-        fig = px.ecdf(data_frame=df, x=x_axis_features, y=y_axis_features)
+        fig = px.ecdf(data_frame=df, x=x_axis_features, y=y_axis_features, color=color, symbol=symbol,
+                      hover_name=hover_name, hover_data=hover_data, text=text, facet_row=facet_row, facet_col=facet_col,
+                      orientation=orientation)
     elif graph_type == "Violin":
-        fig = px.violin(data_frame=df, x=x_axis_features, y=y_axis_features)
+        fig = px.violin(data_frame=df, x=x_axis_features, y=y_axis_features, color=color, hover_name=hover_name,
+                        hover_data=hover_data, custom_data=custom_data, facet_row=facet_row, facet_col=facet_col,
+                        orientation=orientation)
     elif graph_type == "Density Heatmap":
-        fig = px.density_heatmap(data_frame=df, x=x_axis_features, y=y_axis_features)
+        fig = px.density_heatmap(data_frame=df, x=x_axis_features, y=y_axis_features, hover_name=hover_name,
+                                 hover_data=hover_data, facet_row=facet_row, facet_col=facet_col,
+                                 orientation=orientation)
     elif graph_type == "Density Contour":
-        fig = px.density_contour(data_frame=df, x=x_axis_features, y=y_axis_features)
+        fig = px.density_contour(data_frame=df, x=x_axis_features, y=y_axis_features, color=color,
+                                 hover_name=hover_name, hover_data=hover_data, facet_row=facet_row, facet_col=facet_col,
+                                 orientation=orientation)
     else:
-        fig = px.histogram(data_frame=df, x=x_axis_features, y=y_axis_features)
+        fig = px.histogram(data_frame=df, x=x_axis_features, y=y_axis_features, color=color, hover_name=hover_name,
+                           hover_data=hover_data, facet_row=facet_row, facet_col=facet_col, orientation=orientation)
+
+    fig.update_layout(width=width, height=height)
 
     return fig
 
 
-def heatmap_plot_confusion_matrix(cm, labels, title="Confusion Matix"):
-
+def heatmap_plot_confusion_matrix(cm, labels, title="Confusion Matrix"):
     """ This function is not working so, it is not used
     :param cm: This is coonfusion matrix
     :param labels: list(df[df_columns_dropdown_label].unique()) the unique use in the label column
@@ -101,7 +154,6 @@ def heatmap_plot_confusion_matrix(cm, labels, title="Confusion Matix"):
 
 
 def ff_plot_confusion_matrix(z, x, y):
-
     """
     call as: ff_plot_confusion_matrix(cm, df_columns_dropdown_label, df_columns_dropdown_label)
     :param z: It is the confusion matrix
@@ -150,7 +202,6 @@ def ff_plot_confusion_matrix(z, x, y):
 
 
 def get_dummy_variables(df, df_columns_dropdown_label):
-
     """
     This function is not used as I found to create dataframe and interactable data cells in the app.py program
     :param df: The Data Frame
@@ -175,7 +226,6 @@ def get_dummy_variables(df, df_columns_dropdown_label):
 def decision_tree(df, criterion, splitter, max_depth, min_samples_split, min_samples_leaf, min_weight_fraction_leaf,
                   max_features, random_state, max_leaf_nodes, min_impurity_decrease, class_weight, ccp_alpha,
                   df_columns_dropdown_label):
-
     """
     These are the parameters for the Model to be trained
     :param df:
@@ -208,6 +258,9 @@ def decision_tree(df, criterion, splitter, max_depth, min_samples_split, min_sam
     model.fit(X_train, y_train)
     base_pred = model.predict(X_test)
 
+    model_accuracy_Score = accuracy_score(y_true=y_test, y_pred=base_pred)
+    model_accuracy_Score = round(model_accuracy_Score, 4)
+
     cm = confusion_matrix(y_test, base_pred)
     df_columns_dropdown_label = list(df[df_columns_dropdown_label].unique())
     fig = ff_plot_confusion_matrix(cm, df_columns_dropdown_label, df_columns_dropdown_label)
@@ -228,13 +281,12 @@ def decision_tree(df, criterion, splitter, max_depth, min_samples_split, min_sam
 
     dt_tree_graph = dt_graph(df, model)
 
-    return fig, df_feature, dummy_features_df, dummy_features_df_columns, dt_tree_graph
+    return fig, df_feature, dummy_features_df, dummy_features_df_columns, dt_tree_graph, model_accuracy_Score
 
 
 def train_decision_tree(df, criterion, splitter, max_depth, min_samples_split, min_samples_leaf,
                         min_weight_fraction_leaf, max_features, random_state, max_leaf_nodes,
                         min_impurity_decrease, class_weight, ccp_alpha, df_columns_dropdown_label):
-
     """
     This is the same as above function, but it will train the model on whole Data and also return Prediction
     :param df:
@@ -267,13 +319,12 @@ def train_decision_tree(df, criterion, splitter, max_depth, min_samples_split, m
     data = model.feature_importances_
     data = data.round(3)
 
-    df_feature_trained = pd.DataFrame(index=X.columns,data=data).reset_index()
+    df_feature_trained = pd.DataFrame(index=X.columns, data=data).reset_index()
     df_feature_trained.columns = ['Feature Name', 'Feature Importance']
     df_feature_trained = df_feature_trained.sort_values(by='Feature Importance', ascending=False)
 
     # input_features = input_features.split(" ")
     # input_features = [float(x) for x in input_features]
-
 
     # prediction = model.predict([input_features])
 
@@ -282,6 +333,5 @@ def train_decision_tree(df, criterion, splitter, max_depth, min_samples_split, m
 
 
 def model_prediction(model, input_features):
-
     prediction = model.predict([input_features])
     return prediction

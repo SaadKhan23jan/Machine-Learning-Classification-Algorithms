@@ -88,13 +88,14 @@ app.layout = html.Div([
     html.Div([
         html.Label('Explanatory Data Analysis', style={'fontSize': '50px', 'fontWeight': 'bold'}),
         html.Br(),
-        html.Button('Click to Generate Dropdown options', id='eda_gen_options'),
+        html.Button('Click to Generate Dropdown options', id='eda_gen_options',
+                    style={'fontSize': '20px'}),
 
         html.Div([
             html.Label('Select X Feature', style={'width': '25%'}),
             html.Label('Select y Feature', style={'width': '25%'}),
             html.Label('Select Graph Type', style={'width': '25%'}),
-            html.Label('Click to Plot', style={'width': '25%'}),
+            html.Label('Orientation', style={'width': '25%'}),
         ]),
         html.Div([
             dcc.Dropdown(id="x_axis_features", style={'width': '25%'}),
@@ -119,8 +120,57 @@ app.layout = html.Div([
                                                    {'label': 'Density Contour', 'value': 'Density Contour'},
                                                    {'label': 'Imshow', 'value': 'Imshow'}, ],
                          value='Histogram', style={'width': '25%'}),
-            html.Button("Plot Graph", id="plot_graph"),
+
+            dcc.Dropdown(id="orientation", options=[{'label': 'Vertical', 'value': 'v'},
+                                                    {'label': 'Horizontal', 'value': 'h'}, ],
+                         style={'width': '25%'}),
         ], style={'display': 'flex'}),
+
+        html.Div([
+            html.Label('Color', style={'width': '25%'}),
+            html.Label('Symbol', style={'width': '25%'}),
+            html.Label('Size', style={'width': '25%'}),
+            html.Label('Hover Name', style={'width': '25%'}),
+        ]),
+
+        html.Div([
+            dcc.Dropdown(id="color", style={'width': '25%'}),
+            dcc.Dropdown(id="symbol", style={'width': '25%'}),
+            dcc.Dropdown(id="size", style={'width': '25%'}),
+            dcc.Dropdown(id="hover_name", style={'width': '25%'},),
+        ], style={'display': 'flex'}),
+
+        html.Div([
+            html.Label('Hover Data', style={'width': '25%'}),
+            html.Label('Custom Data', style={'width': '25%'}),
+            html.Label('Text', style={'width': '25%'}),
+            html.Label('Facet Row', style={'width': '25%'}),
+        ]),
+
+        html.Div([
+            dcc.Dropdown(id="hover_data", style={'width': '25%'}, multi=True),
+            dcc.Dropdown(id="custom_data", style={'width': '25%'}, multi=True),
+            dcc.Dropdown(id="text", style={'width': '25%'}),
+            dcc.Dropdown(id="facet_row", style={'width': '25%'}),
+        ], style={'display': 'flex'}),
+
+        html.Div([
+            html.Label('Facet Column', style={'width': '25%'}),
+            html.Label('Width of Figure', style={'width': '25%'}),
+            html.Label('Height of Figure', style={'width': '25%'}),
+            html.Label('Sort the Data by'),
+        ]),
+
+        html.Div([
+            dcc.Dropdown(id="facet_col", style={'width': '25%'}),
+            dcc.Input(id='width', style={'width': '25%'}, type='number', inputMode='numeric', step=1, min=0),
+            dcc.Input(id='height', style={'width': '25%'}, type='number', inputMode='numeric', step=1, min=0),
+            dcc.Dropdown(id='sort_by', style={'width': '25%'}),
+        ], style={'display': 'flex'}),
+
+        html.Label('Click to Plot', style={'width': '25%', 'fontSize': '20px'}),
+        html.Br(),
+        html.Button("Plot Graph", id="plot_graph", style={'fontSize': '20px'}),
 
 
         dcc.Graph(id="eda_graph"),
@@ -276,7 +326,17 @@ app.layout = html.Div([
         html.Br(),
 
         # This button runs the calculations, so it is connected to a callback and runs the calculations
-        dbc.Button('Run DecisionTree', id='run_dt', n_clicks=0, style={'fontSize': '20px'}),
+        # The inside div is for showing the accuracy of the Model
+        html.Div([
+            dbc.Button('Run DecisionTree', id='run_dt', n_clicks=0, style={'fontSize': '20px', 'marginRight': '20px'}),
+            html.Div([
+                html.Label("The Accuracy of the Model is",
+                           style={'fontSize': '20px', 'fontWeight': 'bold'}),
+                html.Label(id='model_accuracy_Score', style={'fontSize': '20px', 'fontWeight': 'bold',
+                                                             'marginLeft': '20px', 'color': 'green'}),
+            ], style={'backgroundColor': 'Lightblue', 'width': '25%', 'border': '2px solid black',
+                      'borderRadius': '20px'},),
+        ], style={'display': 'flex'}),
         html.Br(),
         html.Br(),
 
@@ -431,6 +491,16 @@ def upload_dataframe(n_clicks, content, filename, date):
 @app.callback(
     Output('x_axis_features', 'options'),
     Output('y_axis_features', 'options'),
+    Output('color', 'options'),
+    Output('symbol', 'options'),
+    Output('size', 'options'),
+    Output('hover_name', 'options'),
+    Output('hover_data', 'options'),
+    Output('custom_data', 'options'),
+    Output('text', 'options'),
+    Output('facet_row', 'options'),
+    Output('facet_col', 'options'),
+    Output('sort_by', 'options'),
     Input('eda_gen_options', 'n_clicks'),
     prevent_initial_call=True
 )
@@ -447,7 +517,9 @@ def generate_labels_eda(click):
                 'value': colum_name
             }
         )
-    return options_for_dropdown, options_for_dropdown
+    return [options_for_dropdown, options_for_dropdown, options_for_dropdown, options_for_dropdown,
+            options_for_dropdown, options_for_dropdown, options_for_dropdown, options_for_dropdown,
+            options_for_dropdown, options_for_dropdown, options_for_dropdown, options_for_dropdown]
 
 
 # This app.callback() is for generating Graph
@@ -456,10 +528,25 @@ def generate_labels_eda(click):
               [Input('plot_graph', 'n_clicks'),
                State('x_axis_features', 'value'),
                State('y_axis_features', 'value'),
-               State('graph_type', 'value')],
+               State('graph_type', 'value'),
+               State('color', 'value'),
+               State('symbol', 'value'),
+               State('size', 'value'),
+               State('hover_name', 'value'),
+               State('hover_data', 'value'),
+               State('custom_data', 'value'),
+               State('text', 'value'),
+               State('facet_row', 'value'),
+               State('facet_col', 'value'),
+               State('orientation', 'value'),
+               State('width', 'value'),
+               State('height', 'value'),
+               State('sort_by', 'value'), ],
               prevent_initial_call=True)
-def update_graph(n_clicks, x_axis_features, y_axis_features, graph_type):
-    return eda_graph_plot(df, x_axis_features, y_axis_features, graph_type)
+def update_graph(n_clicks, x_axis_features, y_axis_features, graph_type, color, symbol, size, hover_name, hover_data,
+                 custom_data, text, facet_row, facet_col, orientation, width, height, sort_by):
+    return eda_graph_plot(df, x_axis_features, y_axis_features, graph_type, color, symbol, size, hover_name, hover_data,
+                          custom_data, text, facet_row, facet_col, orientation, width, height, sort_by)
 
 
 # This app.callback() generate list of dictionaries from the columns of the df
@@ -552,7 +639,7 @@ def show_dataframe(n_clicks, show_df):
 
 
 # app.callback() 10
-@app.callback(Output('df_feature_div_trained', 'hidden'),
+@app.callback(Output('df_feature_div_trained', 'children'),
               Input('show_df_feature_trained', 'value'),
               prevent_initial_call=True)
 def df_feature_div(show_df_feature_trained):
@@ -560,6 +647,8 @@ def df_feature_div(show_df_feature_trained):
         return True
     else:
         return False
+
+
 
 
 
@@ -575,7 +664,8 @@ def df_feature_div(show_df_feature_trained):
                Output('df_feature', 'data'),
                Output('df_feature', 'columns'),
                Output('dummy_feature', 'data'),
-               Output('dummy_feature', 'columns'), ],
+               Output('dummy_feature', 'columns'),
+               Output('model_accuracy_Score', 'children'), ],
               [Input('run_dt', 'n_clicks'),
                State('criterion', 'value'),
                State('splitter', 'value'),
@@ -598,7 +688,7 @@ def run_decision_tree(n_clicks, criterion, splitter, max_depth, min_samples_spli
     if max_depth == 0:
         max_depth = None
 
-    cm_fig, df_feature, dummy_features_df, dummy_features_df_columns, dt_tree_graph\
+    cm_fig, df_feature, dummy_features_df, dummy_features_df_columns, dt_tree_graph, model_accuracy_Score\
         = decision_tree(df, criterion, splitter, max_depth, min_samples_split, min_samples_leaf,
                         min_weight_fraction_leaf, max_features, random_state, max_leaf_nodes,
                         min_impurity_decrease, class_weight, ccp_alpha, df_columns_dropdown_label)
@@ -609,7 +699,7 @@ def run_decision_tree(n_clicks, criterion, splitter, max_depth, min_samples_spli
     dummy_features_df_columns = [{'name': col, 'id': col} for col in dummy_features_df.columns]
     dummy_features_df_table = dummy_features_df.to_dict(orient='records')
 
-    return dt_tree_graph, cm_fig, df_feature_table, df_feature_columns, dummy_features_df_table, dummy_features_df_columns
+    return dt_tree_graph, cm_fig, df_feature_table, df_feature_columns, dummy_features_df_table, dummy_features_df_columns, model_accuracy_Score
 
 
 """
