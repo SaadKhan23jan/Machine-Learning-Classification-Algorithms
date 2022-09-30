@@ -3,12 +3,10 @@ from dash import Dash, dcc, html, dash_table, ctx, callback
 from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
 import pandas as pd
-
 import base64
-import datetime
 import io
-
-from Algorithms import decision_tree, train_decision_tree, get_dummy_variables, eda_graph_plot, model_prediction
+from Algorithms import decision_tree, train_decision_tree, model_prediction
+from plots import eda_graph_plot
 
 
 

@@ -1,13 +1,11 @@
 import dash
-from dash import Dash, dcc, html, dash_table, ctx, callback
+from dash import dcc, html, dash_table, callback
 from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
 import pandas as pd
-
 import base64
 import io
-
-from Algorithms import decision_tree, train_decision_tree, get_dummy_variables, eda_graph_plot, model_prediction
+from plots import eda_graph_plot
 
 
 def parse_contents(contents, filename, date):
@@ -78,28 +76,29 @@ layout = html.Div([
             dcc.Dropdown(id="x_axis_features_da", style={'width': '25%'}),
             dcc.Dropdown(id="y_axis_features_da", style={'width': '25%'}),
             dcc.Dropdown(id="graph_type_da", options=[{'label': 'Scatter', 'value': 'Scatter'},
-                                                   {'label': 'Line', 'value': 'Line'},
-                                                   {'label': 'Area', 'value': 'Area'},
-                                                   {'label': 'Bar', 'value': 'Bar'},
-                                                   {'label': 'Funnel', 'value': 'Funnel'},
-                                                   {'label': 'Timeline', 'value': 'Timeline'},
-                                                   {'label': 'Pie', 'value': 'Pie'},
-                                                   {'label': 'Subburst', 'value': 'Subburst'},
-                                                   {'label': 'Treemap', 'value': 'Treemap'},
-                                                   {'label': 'Icicle', 'value': 'Icicle'},
-                                                   {'label': 'Funnel Area', 'value': 'Funnel Area'},
-                                                   {'label': 'Histogram', 'value': 'Histogram'},
-                                                   {'label': 'Box', 'value': 'Box'},
-                                                   {'label': 'Violin', 'value': 'Violin'},
-                                                   {'label': 'Strip', 'value': 'Strip'},
-                                                   {'label': 'ECDF', 'value': 'ECDF'},
-                                                   {'label': 'Density Heatmap', 'value': 'Density Heatmap'},
-                                                   {'label': 'Density Contour', 'value': 'Density Contour'},
-                                                   {'label': 'Imshow', 'value': 'Imshow'}, ],
+                                                      {'label': 'Line', 'value': 'Line'},
+                                                      {'label': 'Area', 'value': 'Area'},
+                                                      {'label': 'Bar', 'value': 'Bar'},
+                                                      {'label': 'Funnel', 'value': 'Funnel'},
+                                                      {'label': 'Timeline', 'value': 'Timeline'},
+                                                      {'label': 'Pie', 'value': 'Pie'},
+                                                      {'label': 'Subburst', 'value': 'Subburst'},
+                                                      {'label': 'Treemap', 'value': 'Treemap'},
+                                                      {'label': 'Icicle', 'value': 'Icicle'},
+                                                      {'label': 'Funnel Area', 'value': 'Funnel Area'},
+                                                      {'label': 'Histogram', 'value': 'Histogram'},
+                                                      {'label': 'Box', 'value': 'Box'},
+                                                      {'label': 'Violin', 'value': 'Violin'},
+                                                      {'label': 'Strip', 'value': 'Strip'},
+                                                      {'label': 'ECDF', 'value': 'ECDF'},
+                                                      {'label': 'Density Heatmap', 'value': 'Density Heatmap'},
+                                                      {'label': 'Density Contour', 'value': 'Density Contour'},
+                                                      {'label': 'Imshow', 'value': 'Imshow'},
+                                                      {'label': 'Scatter Geo', 'value': 'Scatter Geo'}],
                          value='Histogram', style={'width': '25%'}),
 
             dcc.Dropdown(id="orientation_da", options=[{'label': 'Vertical', 'value': 'v'},
-                                                    {'label': 'Horizontal', 'value': 'h'}, ],
+                                                       {'label': 'Horizontal', 'value': 'h'}, ],
                          style={'width': '25%'}),
         ], style={'display': 'flex'}),
 
@@ -145,6 +144,22 @@ layout = html.Div([
             dcc.Dropdown(id='sort_by_da', style={'width': '25%'}),
         ], style={'display': 'flex'}),
 
+        html.Div([
+            html.Label('Latitude', style={'width': '25%'}),
+            html.Label('Longitude', style={'width': '25%'}),
+            html.Label('Locations', style={'width': '25%'}),
+            html.Label('Location Mode'),
+        ]),
+
+        html.Div([
+            dcc.Dropdown(id="latitude_da", style={'width': '25%'}),
+            dcc.Dropdown(id='longitude_da', style={'width': '25%'}),
+            dcc.Dropdown(id='locations_da', style={'width': '25%'}),
+            dcc.Dropdown(id='locationmode_da', style={'width': '25%'},
+                         options=[{'label': 'ISO-3', 'value': 'ISO-3'},
+                                  {'label': 'USA-states', 'value': 'USA-states'}, ], ),
+        ], style={'display': 'flex'}),
+
         html.Label('Click to Plot', style={'width': '25%', 'fontSize': '20px'}),
         html.Br(),
         html.Button("Plot Graph", id="plot_graph_da", style={'fontSize': '20px'}),
@@ -156,9 +171,9 @@ layout = html.Div([
     html.Div([
         html.Label('Select an Action to perform', style={'fontSize': '20px'}),
         dcc.Dropdown(id='df_actions_da', options=[{'label': 'Information', 'value': 'Information'},
-                                               {'label': 'Is Null', 'value': 'Is Null'},
-                                               {'label': 'Drop NA', 'value': 'Drop NA'},
-                                               {'label': 'Head', 'value': 'Head'}]),
+                                                  {'label': 'Is Null', 'value': 'Is Null'},
+                                                  {'label': 'Drop NA', 'value': 'Drop NA'},
+                                                  {'label': 'Head', 'value': 'Head'}]),
         dash_table.DataTable(id='df_actions_output_da'),
     ], style={'background': '#f3f2f5', 'width': '50%', 'padding': '20px', 'border': '2px solid black',
               'borderRadius': '10px'}),
@@ -169,8 +184,8 @@ layout = html.Div([
     html.Div([
         html.Label('Show the DataFrame', style={'fontSize': '20px', 'paddingRight': '20px'}),
         dcc.RadioItems(id='show_df_da', options=[{'label': 'Full   ', 'value': 'Full'},
-                                              {'label': 'Head', 'value': 'Head'},
-                                              {'label': 'No', 'value': 'No'}, ],
+                                                 {'label': 'Head', 'value': 'Head'},
+                                                 {'label': 'No', 'value': 'No'}, ],
                        value='No', style={'fontSize': '20px'}, inputStyle={'marginRight': '10px'}),
         dbc.Button('Show', id='show_df_button_da', n_clicks=0, style={'fontSize': '20px'})
     ], style={'background': '#f3f2f5', 'width': '50%', 'padding': '20px', 'border': '2px solid black',
@@ -191,8 +206,6 @@ layout = html.Div([
                                       ),
              ], hidden=True),
     html.Br(),
-
-
 
 ], style={'background': 'Lightgreen'})
 
@@ -237,6 +250,9 @@ def upload_dataframe(n_clicks, content, filename, date):
     Output('facet_row_da', 'options'),
     Output('facet_col_da', 'options'),
     Output('sort_by_da', 'options'),
+    Output('latitude_da', 'options'),
+    Output('longitude_da', 'options'),
+    Output('locations_da', 'options'),
     Input('eda_gen_options_da', 'n_clicks'),
     prevent_initial_call=True
 )
@@ -255,41 +271,48 @@ def generate_labels_eda(click):
         )
     return [options_for_dropdown, options_for_dropdown, options_for_dropdown, options_for_dropdown,
             options_for_dropdown, options_for_dropdown, options_for_dropdown, options_for_dropdown,
-            options_for_dropdown, options_for_dropdown, options_for_dropdown, options_for_dropdown]
+            options_for_dropdown, options_for_dropdown, options_for_dropdown, options_for_dropdown,
+            options_for_dropdown, options_for_dropdown, options_for_dropdown]
 
 
 # This app.callback() is for generating Graph
 # app.callback() 3
 @callback(Output('eda_graph_da', 'figure'),
-              [Input('plot_graph_da', 'n_clicks'),
-               State('x_axis_features_da', 'value'),
-               State('y_axis_features_da', 'value'),
-               State('graph_type_da', 'value'),
-               State('color_da', 'value'),
-               State('symbol_da', 'value'),
-               State('size_da', 'value'),
-               State('hover_name_da', 'value'),
-               State('hover_data_da', 'value'),
-               State('custom_data_da', 'value'),
-               State('text_da', 'value'),
-               State('facet_row_da', 'value'),
-               State('facet_col_da', 'value'),
-               State('orientation_da', 'value'),
-               State('width_da', 'value'),
-               State('height_da', 'value'),
-               State('sort_by_da', 'value'), ],
-              prevent_initial_call=True)
+          [Input('plot_graph_da', 'n_clicks'),
+           State('x_axis_features_da', 'value'),
+           State('y_axis_features_da', 'value'),
+           State('graph_type_da', 'value'),
+           State('color_da', 'value'),
+           State('symbol_da', 'value'),
+           State('size_da', 'value'),
+           State('hover_name_da', 'value'),
+           State('hover_data_da', 'value'),
+           State('custom_data_da', 'value'),
+           State('text_da', 'value'),
+           State('facet_row_da', 'value'),
+           State('facet_col_da', 'value'),
+           State('orientation_da', 'value'),
+           State('width_da', 'value'),
+           State('height_da', 'value'),
+           State('sort_by_da', 'value'),
+           State('latitude_da', 'value'),
+           State('longitude_da', 'value'),
+           State('locations_da', 'value'),
+           State('locationmode_da', 'value'), ],
+          prevent_initial_call=True)
 def update_graph(n_clicks, x_axis_features, y_axis_features, graph_type, color, symbol, size, hover_name, hover_data,
-                 custom_data, text, facet_row, facet_col, orientation, width, height, sort_by):
+                 custom_data, text, facet_row, facet_col, orientation, width, height, sort_by, latitude_da,
+                 longitude_da, locations_da, locationmode_da):
     return eda_graph_plot(df, x_axis_features, y_axis_features, graph_type, color, symbol, size, hover_name, hover_data,
-                          custom_data, text, facet_row, facet_col, orientation, width, height, sort_by)
+                          custom_data, text, facet_row, facet_col, orientation, width, height, sort_by,
+                          latitude_da, longitude_da, locations_da, locationmode_da)
 
 
 # This app.callback() is for showing the Data Frame as per the choice
 # app.callback() 5
 @callback(Output('df_div_da', 'hidden'),
-              Input('show_df_da', 'value'),
-              prevent_initial_call=True)
+          Input('show_df_da', 'value'),
+          prevent_initial_call=True)
 def df_div(show_df):
     if show_df == "No":
         return True
@@ -300,10 +323,10 @@ def df_div(show_df):
 # This app.callback() is for showing the  Data Frame as per the choice
 # app.callback() 9
 @callback([Output('dataframe_da', 'data'),
-               Output('dataframe_da', 'columns'), ],
-              [Input('show_df_button_da', 'n_clicks'),
-               State('show_df_da', 'value'), ],
-              prevent_initial_call=True)
+           Output('dataframe_da', 'columns'), ],
+          [Input('show_df_button_da', 'n_clicks'),
+           State('show_df_da', 'value'), ],
+          prevent_initial_call=True)
 def show_dataframe(n_clicks, show_df):
     df_columns = [{'name': col, 'id': col} for col in df.columns]
     df_table = df.to_dict(orient='records')
