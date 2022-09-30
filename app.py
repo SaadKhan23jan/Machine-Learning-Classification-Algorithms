@@ -5,7 +5,10 @@ import dash_bootstrap_components as dbc
 css_sheet = [dbc.themes.COSMO]
 
 app = Dash(__name__, use_pages=True, external_stylesheets=css_sheet)
+
 app.title = "Machine Learning Classifications"
+
+server = app.server
 
 app.layout = html.Div([
     html.Div(f"Data Visualization and Machine Learning",
