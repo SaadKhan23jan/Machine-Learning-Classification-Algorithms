@@ -3,7 +3,6 @@ from dash import Dash, dcc, html, dash_table, ctx
 from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
 import pandas as pd
-from plots import dt_graph
 
 import base64
 import datetime
@@ -57,9 +56,7 @@ app.title = "Machine Learning Classifications"
 server = app.server
 
 
-# Here we will upload the image created from DecisionTree
-image_filename = 'dt_tree.png'
-encoded_image = base64.b64encode(open(image_filename, 'rb').read())
+
 
 
 app.layout = html.Div([
@@ -390,8 +387,8 @@ app.layout = html.Div([
     # This div has the plot for DecisionTree Diagram
     html.Div(id='show_dt_fig',
              children=[
+                 dcc.Graph('dt_fig_plotly'),
                  dcc.Graph(id='dt_graph'),
-                 html.Img(src='data:image/png;base64,{}'.format(encoded_image.decode())),
              ], hidden=True),
     html.Br(),
 
@@ -665,7 +662,8 @@ def df_feature_div(show_df_feature_trained):
                Output('df_feature', 'columns'),
                Output('dummy_feature', 'data'),
                Output('dummy_feature', 'columns'),
-               Output('model_accuracy_Score', 'children'), ],
+               Output('model_accuracy_Score', 'children'),
+               Output('dt_fig_plotly', 'figure')],
               [Input('run_dt', 'n_clicks'),
                State('criterion', 'value'),
                State('splitter', 'value'),
@@ -688,10 +686,10 @@ def run_decision_tree(n_clicks, criterion, splitter, max_depth, min_samples_spli
     if max_depth == 0:
         max_depth = None
 
-    cm_fig, df_feature, dummy_features_df, dummy_features_df_columns, dt_tree_graph, model_accuracy_Score\
-        = decision_tree(df, criterion, splitter, max_depth, min_samples_split, min_samples_leaf,
-                        min_weight_fraction_leaf, max_features, random_state, max_leaf_nodes,
-                        min_impurity_decrease, class_weight, ccp_alpha, df_columns_dropdown_label)
+    cm_fig, df_feature, dummy_features_df, dummy_features_df_columns, dt_tree_graph, model_accuracy_score,\
+    dt_fig_plotly = decision_tree(df, criterion, splitter, max_depth, min_samples_split, min_samples_leaf,
+                                     min_weight_fraction_leaf, max_features, random_state, max_leaf_nodes,
+                                     min_impurity_decrease, class_weight, ccp_alpha, df_columns_dropdown_label)
 
     df_feature_columns = [{'name': col, 'id': col} for col in df_feature.columns]
     df_feature_table = df_feature.to_dict(orient='records')
@@ -699,7 +697,8 @@ def run_decision_tree(n_clicks, criterion, splitter, max_depth, min_samples_spli
     dummy_features_df_columns = [{'name': col, 'id': col} for col in dummy_features_df.columns]
     dummy_features_df_table = dummy_features_df.to_dict(orient='records')
 
-    return dt_tree_graph, cm_fig, df_feature_table, df_feature_columns, dummy_features_df_table, dummy_features_df_columns, model_accuracy_Score
+    return [dt_tree_graph, cm_fig, df_feature_table, df_feature_columns, dummy_features_df_table,
+            dummy_features_df_columns, model_accuracy_score, dt_fig_plotly]
 
 
 """

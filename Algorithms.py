@@ -11,7 +11,7 @@ from sklearn.tree import plot_tree
 import plotly.graph_objects as go
 import plotly.express as px
 import plotly.figure_factory as ff
-from plots import dt_graph
+from plots import dt_plotly, dt_heatmap_graph
 
 
 def eda_graph_plot(df, x_axis_features=None, y_axis_features=None, graph_type=None, color=None, symbol=None, size=None,
@@ -258,16 +258,15 @@ def decision_tree(df, criterion, splitter, max_depth, min_samples_split, min_sam
     model.fit(X_train, y_train)
     base_pred = model.predict(X_test)
 
-    model_accuracy_Score = accuracy_score(y_true=y_test, y_pred=base_pred)
-    model_accuracy_Score = round(model_accuracy_Score, 4)
+    model_accuracy_score = accuracy_score(y_true=y_test, y_pred=base_pred)
+    model_accuracy_score = round(model_accuracy_score, 4)
 
     cm = confusion_matrix(y_test, base_pred)
     df_columns_dropdown_label = list(df[df_columns_dropdown_label].unique())
     fig = ff_plot_confusion_matrix(cm, df_columns_dropdown_label, df_columns_dropdown_label)
 
-    plt.figure(figsize=(12, 8), dpi=150)
-    plot_tree(model)
-    plt.savefig('dt_tree', filled=True, feature_names=X.columns)
+
+    dt_fig_plotly = dt_plotly(model)
 
     data = model.feature_importances_
     data = data.round(3)
@@ -279,9 +278,9 @@ def decision_tree(df, criterion, splitter, max_depth, min_samples_split, min_sam
     dummy_features_df = X[:1]
     dummy_features_df_columns = list(X.columns)
 
-    dt_tree_graph = dt_graph(df, model)
+    dt_tree_graph = dt_heatmap_graph(df, model)
 
-    return fig, df_feature, dummy_features_df, dummy_features_df_columns, dt_tree_graph, model_accuracy_Score
+    return fig, df_feature, dummy_features_df, dummy_features_df_columns, dt_tree_graph, model_accuracy_score, dt_fig_plotly
 
 
 def train_decision_tree(df, criterion, splitter, max_depth, min_samples_split, min_samples_leaf,
