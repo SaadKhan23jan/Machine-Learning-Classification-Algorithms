@@ -326,7 +326,7 @@ layout = html.Div([
               'borderRadius': '10px', 'display': 'flex'}),
 
     # This is a returned Data Frame from the Decision model and also connected to callback from the above div Yes/No
-    # app.callback() 4
+    # app.callback() 4 and 7
     html.Div(id='df_feature_div_lr',
              children=[
                  dash_table.DataTable(id='df_feature_lr'),
@@ -344,22 +344,12 @@ layout = html.Div([
               'borderRadius': '10px', 'display': 'flex'}),
 
     # This is a returned confusion matrix from model and the function heatmap_plot_confusion_matrix
-    # app.callback() 5
+    # app.callback() 7
     html.Div(id='show_cm_graph_lr',
              children=[
                  dcc.Graph(id='confusion_matrix_lr'),
              ], hidden=True),
     html.Br(),
-
-    # Same radio buttons for DecisionTree Diagram as above for Feature Importance Data Frame and Confusion Matrix
-    # app.callback() 8
-    html.Div([
-        html.Label('Show Tree Structure', style={'fontSize': '20px', 'paddingRight': '20px'}),
-        dcc.RadioItems(id='show_dt_lr', options=[{'label': 'Yes', 'value': 'Yes'},
-                                                 {'label': 'No', 'value': 'No'}],
-                       value='No', style={'fontSize': '20px'}, inputStyle={'marginRight': '10px'}),
-    ], style={'background': '#f3f2f5', 'width': '25%', 'padding': '20px', 'border': '2px solid black',
-              'borderRadius': '10px', 'display': 'flex'}),
 
     # This button is for training the model on whole data and then predict the value
     html.Div([
@@ -370,20 +360,21 @@ layout = html.Div([
     html.Br(),
 
     # This div has radio button, if Yes, then it will show Data Frame of feature importance
+    # This is connected to callback 8
     html.Div([
         html.Label('Show the Feature Importance of Trained Model', style={'fontSize': '20px', 'paddingRight': '20px'}),
         dcc.RadioItems(id='show_df_feature_trained_lr', options=[{'label': 'Yes', 'value': 'Yes'},
-                                                                 {'label': 'No', 'value': 'No'}],
+                                                                 {'label': 'No', 'value': 'No'}, ],
                        value='No', style={'fontSize': '20px'}, inputStyle={'marginRight': '10px'}),
     ], style={'background': '#f3f2f5', 'width': '25%', 'padding': '20px', 'border': '2px solid black',
               'borderRadius': '10px', 'display': 'flex'}),
 
     # This is a returned Data Frame from the Decision model and also connected to callback from the above div Yes/No
-    # app.callback() 7
+    # app.callback() 6
     html.Div(id='df_feature_div_trained_lr',
              children=[
                  dash_table.DataTable(id='df_feature_trained_lr'),
-             ], hidden=False),
+             ], hidden=True),
     html.Br(),
 
     # This table appears once the model is trained, it is editable
@@ -404,7 +395,7 @@ layout = html.Div([
     html.Br(),
 
     # This Div is for showing the results of the Predictions from the model
-    # id='prediction_lr' is connected to callback 9
+    # id='prediction_lr' is connected to callback 8
     html.Div([html.Label('Prediction with the Selected Parameters set: ',
                          style={'fontSize': '20px', 'fontWeight': 'bold', 'paddingRight': '10px'}),
               html.Div([
@@ -542,11 +533,11 @@ def cm_graph(show_cm):
         return True
 
 
-# app.callback() 7
-@callback(Output('df_feature_div_trained_lr', 'children'),
+# app.callback() 6
+@callback(Output('df_feature_div_trained_lr', 'hidden'),
           Input('show_df_feature_trained_lr', 'value'),
           prevent_initial_call=True)
-def df_feature_div(show_df_feature_trained):
+def df_feature_div_trained(show_df_feature_trained):
     if show_df_feature_trained == "No":
         return True
     else:
@@ -560,7 +551,7 @@ def df_feature_div(show_df_feature_trained):
 """
 
 
-# callback 8
+# callback 7
 @callback([Output('confusion_matrix_lr', 'figure'),
            Output('df_feature_lr', 'data'),
            Output('df_feature_lr', 'columns'),
@@ -604,7 +595,7 @@ def run_decision_tree(n_clicks, penalty_lr, dual_lr, tol_lr, c_lr, fit_intercept
 """
 
 
-# callback 9
+# callback 8
 @callback([Output('prediction_lr', 'children'),
            Output('target_label_lr', 'children'),
            Output('message_lr', 'children'),

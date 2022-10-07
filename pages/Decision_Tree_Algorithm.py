@@ -400,7 +400,7 @@ layout = html.Div([
     html.Div(id='df_feature_div_trained',
              children=[
                  dash_table.DataTable(id='df_feature_trained'),
-             ], hidden=False),
+             ], hidden=True),
     html.Br(),
 
     # This table appears once the model is trained, it is editable
@@ -618,7 +618,7 @@ def show_dataframe(n_clicks, show_df):
 
 
 # app.callback() 10
-@callback(Output('df_feature_div_trained', 'children'),
+@callback(Output('df_feature_div_trained', 'hidden'),
           Input('show_df_feature_trained', 'value'),
           prevent_initial_call=True)
 def df_feature_div(show_df_feature_trained):
