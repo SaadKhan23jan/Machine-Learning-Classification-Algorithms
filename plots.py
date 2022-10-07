@@ -1,13 +1,4 @@
-import plotly.graph_objects as go
-import igraph
 from igraph import Graph, EdgeSeq
-from sklearn.tree import plot_tree
-
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-import matplotlib.pyplot as plt
 from sklearn.tree import plot_tree
 import plotly.graph_objects as go
 import plotly.express as px

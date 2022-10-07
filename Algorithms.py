@@ -1,17 +1,11 @@
-import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
+import math
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
-from sklearn.metrics import confusion_matrix, classification_report, plot_confusion_matrix
+from sklearn.metrics import confusion_matrix
 from sklearn.tree import DecisionTreeClassifier
-import matplotlib.pyplot as plt
-from sklearn.tree import plot_tree
-import plotly.graph_objects as go
-import plotly.express as px
-import plotly.figure_factory as ff
-from plots import dt_plotly, dt_heatmap_graph
+from sklearn.linear_model import LogisticRegression
+from plots import dt_plotly, dt_heatmap_graph, ff_plot_confusion_matrix
 
 
 def get_dummy_variables(df, df_columns_dropdown_label):
@@ -141,6 +135,97 @@ def train_decision_tree(df, criterion, splitter, max_depth, min_samples_split, m
     # prediction = model.predict([input_features])
 
     # return prediction
+    return model, df_feature_trained
+
+
+def logistic_regression(df, penalty_lr, dual_lr, tol_lr, c_lr, fit_intercept_lr, intercept_scaling_lr, random_state_lr,
+                        solver_lr, max_iter_lr, multi_class_lr, l1_ratio_lr, df_columns_dropdown_label):
+    """
+    :param df:
+    :param penalty_lr:
+    :param dual_lr:
+    :param tol_lr:
+    :param c_lr:
+    :param fit_intercept_lr:
+    :param intercept_scaling_lr:
+    :param random_state_lr:
+    :param solver_lr:
+    :param max_iter_lr:
+    :param multi_class_lr:
+    :param l1_ratio_lr:
+    :param df_columns_dropdown_label:
+    :return:
+    """
+
+    df = df.dropna()
+    X = pd.get_dummies(df.drop(df_columns_dropdown_label, axis=1), drop_first=True)
+    y = df[df_columns_dropdown_label]
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=101)
+    model = LogisticRegression(penalty=penalty_lr, dual=dual_lr, tol=tol_lr, C=c_lr, fit_intercept=fit_intercept_lr,
+                               intercept_scaling=intercept_scaling_lr, random_state=random_state_lr, solver=solver_lr,
+                               max_iter=max_iter_lr, multi_class=multi_class_lr, l1_ratio=l1_ratio_lr)
+    model.fit(X_train, y_train)
+    base_pred = model.predict(X_test)
+
+    model_accuracy_score = accuracy_score(y_true=y_test, y_pred=base_pred)
+    model_accuracy_score = round(model_accuracy_score, 4)
+
+    cm = confusion_matrix(y_test, base_pred)
+    df_columns_dropdown_label = list(df[df_columns_dropdown_label].unique())
+    fig = ff_plot_confusion_matrix(cm, df_columns_dropdown_label, df_columns_dropdown_label)
+
+    # Here Feature Importance Matrix is created manually
+    data = model.coef_[0] # [0] because it is array inside array
+    data = data.round(3)
+
+    df_feature = pd.DataFrame(index=X.columns, data=data).reset_index()
+    df_feature.columns = ['Feature Name', 'Feature Importance']
+    df_feature["importance"] = pow(math.e, data) # This step can be skipped
+    df_feature = df_feature.sort_values(by='Feature Importance', ascending=False)
+
+    dummy_features_df = X[:1]
+    dummy_features_df_columns = list(X.columns)
+
+    return fig, df_feature, dummy_features_df, dummy_features_df_columns, model_accuracy_score
+
+
+def train_logistic_regression(df, penalty_lr, dual_lr, tol_lr, c_lr, fit_intercept_lr, intercept_scaling_lr,
+                              random_state_lr, solver_lr, max_iter_lr, multi_class_lr, l1_ratio_lr,
+                              df_columns_dropdown_label):
+    """
+    :param df:
+    :param penalty_lr:
+    :param dual_lr:
+    :param tol_lr:
+    :param c_lr:
+    :param fit_intercept_lr:
+    :param intercept_scaling_lr:
+    :param random_state_lr:
+    :param solver_lr:
+    :param max_iter_lr:
+    :param multi_class_lr:
+    :param l1_ratio_lr:
+    :param df_columns_dropdown_label:
+    :return:
+    """
+
+    df = df.dropna()
+    X = pd.get_dummies(df.drop(df_columns_dropdown_label, axis=1), drop_first=True)
+    y = df[df_columns_dropdown_label]
+    model = LogisticRegression(penalty=penalty_lr, dual=dual_lr, tol=tol_lr, C=c_lr, fit_intercept=fit_intercept_lr,
+                               intercept_scaling=intercept_scaling_lr, random_state=random_state_lr, solver=solver_lr,
+                               max_iter=max_iter_lr, multi_class=multi_class_lr, l1_ratio=l1_ratio_lr)
+    model.fit(X, y)
+
+    # Here Feature Importance Matrix is created manually
+    data = model.coef_[0]  # [0] because it is array inside array
+    data = data.round(3)
+
+    df_feature_trained = pd.DataFrame(index=X.columns, data=data).reset_index()
+    df_feature_trained.columns = ['Feature Name', 'Feature Importance']
+    df_feature_trained["importance"] = pow(math.e, data)  # This step can be skipped
+    df_feature_trained = df_feature_trained.sort_values(by='Feature Importance', ascending=False)
+
     return model, df_feature_trained
 
 
