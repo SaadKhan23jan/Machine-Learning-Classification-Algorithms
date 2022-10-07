@@ -9,16 +9,14 @@ from Algorithms import decision_tree, train_decision_tree, model_prediction
 from plots import eda_graph_plot
 
 
-
 # from upload_df import parse_contents
 # The following code was for df from local file on this machine
 # df = pd.read_csv('penguins_size.csv')
 # df = df.dropna()
 # df = df[df['sex']!='.']
 
+
 # This function create Pandas DataFrame from the uploaded file and make it global
-
-
 def parse_contents(contents, filename, date):
     content_type, content_string = contents.split(',')
 
@@ -507,24 +505,24 @@ def generate_labels_eda(click):
 # This app.callback() is for generating Graph
 # app.callback() 3
 @callback(Output('eda_graph', 'figure'),
-              [Input('plot_graph', 'n_clicks'),
-               State('x_axis_features', 'value'),
-               State('y_axis_features', 'value'),
-               State('graph_type', 'value'),
-               State('color', 'value'),
-               State('symbol', 'value'),
-               State('size', 'value'),
-               State('hover_name', 'value'),
-               State('hover_data', 'value'),
-               State('custom_data', 'value'),
-               State('text', 'value'),
-               State('facet_row', 'value'),
-               State('facet_col', 'value'),
-               State('orientation', 'value'),
-               State('width', 'value'),
-               State('height', 'value'),
-               State('sort_by', 'value'), ],
-              prevent_initial_call=True)
+          [Input('plot_graph', 'n_clicks'),
+           State('x_axis_features', 'value'),
+           State('y_axis_features', 'value'),
+           State('graph_type', 'value'),
+           State('color', 'value'),
+           State('symbol', 'value'),
+           State('size', 'value'),
+           State('hover_name', 'value'),
+           State('hover_data', 'value'),
+           State('custom_data', 'value'),
+           State('text', 'value'),
+           State('facet_row', 'value'),
+           State('facet_col', 'value'),
+           State('orientation', 'value'),
+           State('width', 'value'),
+           State('height', 'value'),
+           State('sort_by', 'value'), ],
+          prevent_initial_call=True)
 def update_graph(n_clicks, x_axis_features, y_axis_features, graph_type, color, symbol, size, hover_name, hover_data,
                  custom_data, text, facet_row, facet_col, orientation, width, height, sort_by):
     return eda_graph_plot(df, x_axis_features, y_axis_features, graph_type, color, symbol, size, hover_name, hover_data,
@@ -557,8 +555,8 @@ def generate_labels_pred(click):
 # This app.callback() is for showing the Data Frame as per the choice
 # app.callback() 5
 @callback(Output('df_div', 'hidden'),
-              Input('show_df', 'value'),
-              prevent_initial_call=True)
+          Input('show_df', 'value'),
+          prevent_initial_call=True)
 def df_div(show_df):
     if show_df == "No":
         return True
@@ -569,8 +567,8 @@ def df_div(show_df):
 # This app.callback() is for showing the Feature Importance Data Frame as per the choice
 # app.callback() 6
 @callback(Output('df_feature_div', 'hidden'),
-              Input('show_df_feature', 'value'),
-              prevent_initial_call=True)
+          Input('show_df_feature', 'value'),
+          prevent_initial_call=True)
 def df_feature_div(show_df_feature):
     if show_df_feature == "No":
         return True
@@ -581,8 +579,8 @@ def df_feature_div(show_df_feature):
 # This app.callback() is for showing the Confusion Matrix as per the choice
 # app.callback() 7
 @callback(Output('show_cm_graph', 'hidden'),
-              Input('show_cm', 'value'),
-              prevent_initial_call=True)
+          Input('show_cm', 'value'),
+          prevent_initial_call=True)
 def cm_graph(show_cm):
     if show_cm == "Yes":
         return False
@@ -593,8 +591,8 @@ def cm_graph(show_cm):
 # This app.callback() is for showing the Decision Tree as per the choice
 # app.callback() 8
 @callback(Output('show_dt_fig', 'hidden'),
-              Input('show_dt', 'value'),
-              prevent_initial_call=True)
+          Input('show_dt', 'value'),
+          prevent_initial_call=True)
 def cm_graph(show_cm):
     if show_cm == "Yes":
         return False
@@ -605,10 +603,10 @@ def cm_graph(show_cm):
 # This app.callback() is for showing the  Data Frame as per the choice
 # app.callback() 9
 @callback([Output('dataframe', 'data'),
-               Output('dataframe', 'columns'), ],
-              [Input('show_df_button', 'n_clicks'),
-               State('show_df', 'value'), ],
-              prevent_initial_call=True)
+           Output('dataframe', 'columns'), ],
+          [Input('show_df_button', 'n_clicks'),
+           State('show_df', 'value'), ],
+          prevent_initial_call=True)
 def show_dataframe(n_clicks, show_df):
     df_columns = [{'name': col, 'id': col} for col in df.columns]
     df_table = df.to_dict(orient='records')
@@ -621,8 +619,8 @@ def show_dataframe(n_clicks, show_df):
 
 # app.callback() 10
 @callback(Output('df_feature_div_trained', 'children'),
-              Input('show_df_feature_trained', 'value'),
-              prevent_initial_call=True)
+          Input('show_df_feature_trained', 'value'),
+          prevent_initial_call=True)
 def df_feature_div(show_df_feature_trained):
     if show_df_feature_trained == "No":
         return True
@@ -638,28 +636,28 @@ def df_feature_div(show_df_feature_trained):
 
 
 @callback([Output('dt_graph', 'figure'),
-               Output('confusion_matrix', 'figure'),
-               Output('df_feature', 'data'),
-               Output('df_feature', 'columns'),
-               Output('dummy_feature', 'data'),
-               Output('dummy_feature', 'columns'),
-               Output('model_accuracy_Score', 'children'),
-               Output('dt_fig_plotly', 'figure')],
-              [Input('run_dt', 'n_clicks'),
-               State('criterion', 'value'),
-               State('splitter', 'value'),
-               State('max_depth', 'value'),
-               State('min_samples_split', 'value'),
-               State('min_samples_leaf', 'value'),
-               State('min_weight_fraction_leaf', 'value'),
-               State('max_features', 'value'),
-               State('random_state', 'value'),
-               State('max_leaf_nodes', 'value'),
-               State('min_impurity_decrease', 'value'),
-               State('class_weight', 'value'),
-               State('ccp_alpha', 'value'),
-               State('df_columns_dropdown_label', 'value'), ],
-              prevent_initial_call=True, )
+           Output('confusion_matrix', 'figure'),
+           Output('df_feature', 'data'),
+           Output('df_feature', 'columns'),
+           Output('dummy_feature', 'data'),
+           Output('dummy_feature', 'columns'),
+           Output('model_accuracy_Score', 'children'),
+           Output('dt_fig_plotly', 'figure')],
+          [Input('run_dt', 'n_clicks'),
+           State('criterion', 'value'),
+           State('splitter', 'value'),
+           State('max_depth', 'value'),
+           State('min_samples_split', 'value'),
+           State('min_samples_leaf', 'value'),
+           State('min_weight_fraction_leaf', 'value'),
+           State('max_features', 'value'),
+           State('random_state', 'value'),
+           State('max_leaf_nodes', 'value'),
+           State('min_impurity_decrease', 'value'),
+           State('class_weight', 'value'),
+           State('ccp_alpha', 'value'),
+           State('df_columns_dropdown_label', 'value'), ],
+          prevent_initial_call=True, )
 def run_decision_tree(n_clicks, criterion, splitter, max_depth, min_samples_split,
                       min_samples_leaf, min_weight_fraction_leaf, max_features, random_state, max_leaf_nodes,
                       min_impurity_decrease, class_weight, ccp_alpha, df_columns_dropdown_label):
@@ -687,28 +685,28 @@ def run_decision_tree(n_clicks, criterion, splitter, max_depth, min_samples_spli
 
 
 @callback([Output('prediction', 'children'),
-               Output('target_label', 'children'),
-               Output('message', 'children'),
-               Output('df_feature_trained', 'data'),
-               Output('df_feature_trained', 'columns'), ],
-              [Input('train_model', 'n_clicks'),
-               Input('prediction_button', 'n_clicks'),
-               State('criterion', 'value'),
-               State('splitter', 'value'),
-               State('max_depth', 'value'),
-               State('min_samples_split', 'value'),
-               State('min_samples_leaf', 'value'),
-               State('min_weight_fraction_leaf', 'value'),
-               State('max_features', 'value'),
-               State('random_state', 'value'),
-               State('max_leaf_nodes', 'value'),
-               State('min_impurity_decrease', 'value'),
-               State('class_weight', 'value'),
-               State('ccp_alpha', 'value'),
-               State('df_columns_dropdown_label', 'value'),
-               # State('input_features', 'value'),
-               State('dummy_feature', 'data'), ],
-              prevent_initial_call=True,)
+           Output('target_label', 'children'),
+           Output('message', 'children'),
+           Output('df_feature_trained', 'data'),
+           Output('df_feature_trained', 'columns'), ],
+          [Input('train_model', 'n_clicks'),
+           Input('prediction_button', 'n_clicks'),
+           State('criterion', 'value'),
+           State('splitter', 'value'),
+           State('max_depth', 'value'),
+           State('min_samples_split', 'value'),
+           State('min_samples_leaf', 'value'),
+           State('min_weight_fraction_leaf', 'value'),
+           State('max_features', 'value'),
+           State('random_state', 'value'),
+           State('max_leaf_nodes', 'value'),
+           State('min_impurity_decrease', 'value'),
+           State('class_weight', 'value'),
+           State('ccp_alpha', 'value'),
+           State('df_columns_dropdown_label', 'value'),
+           # State('input_features', 'value'),
+           State('dummy_feature', 'data'), ],
+          prevent_initial_call=True, )
 def predictions(n_clicks_train_model, n_clicks_prediction_button, criterion, splitter, max_depth, min_samples_split,
                 min_samples_leaf, min_weight_fraction_leaf,
                 max_features, random_state, max_leaf_nodes, min_impurity_decrease, class_weight, ccp_alpha,
@@ -753,4 +751,3 @@ def predictions(n_clicks_train_model, n_clicks_prediction_button, criterion, spl
         prediction = model_prediction(trained_model, input_features)
         return str(prediction[
                        0]), df_columns_dropdown_label, f"Model Trained {n_clicks_train_model} times", df_feature_trained_table, df_feature_trained_columns
-
