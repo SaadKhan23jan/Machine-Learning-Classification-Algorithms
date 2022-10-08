@@ -428,7 +428,7 @@ def update_graph(crypto, time_frame):
     fig1, fig2, fig3 = crypto_plots(df_live, crypto)
 
 
-    fig_seasonality_decompose = decomposition(df_live, time_frame)
+    fig_seasonality_decompose = decomposition(df_live)
 
     return fig1, fig2, fig3, fig_seasonality_decompose
 

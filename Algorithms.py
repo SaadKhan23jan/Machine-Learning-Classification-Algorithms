@@ -5,6 +5,9 @@ from sklearn.metrics import accuracy_score
 from sklearn.metrics import confusion_matrix
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.cluster import KMeans
+import plotly.graph_objects as go
 from plots import dt_plotly, dt_heatmap_graph, ff_plot_confusion_matrix
 
 
@@ -72,7 +75,6 @@ def decision_tree(df, criterion, splitter, max_depth, min_samples_split, min_sam
     df_columns_dropdown_label = list(df[df_columns_dropdown_label].unique())
     fig = ff_plot_confusion_matrix(cm, df_columns_dropdown_label, df_columns_dropdown_label)
 
-
     dt_fig_plotly = dt_plotly(model)
 
     data = model.feature_importances_
@@ -109,7 +111,6 @@ def train_decision_tree(df, criterion, splitter, max_depth, min_samples_split, m
     :param class_weight:
     :param ccp_alpha:
     :param df_columns_dropdown_label:
-    :param input_features:
     :return:
     """
     X = pd.get_dummies(df.drop(df_columns_dropdown_label, axis=1), drop_first=True)
@@ -136,6 +137,138 @@ def train_decision_tree(df, criterion, splitter, max_depth, min_samples_split, m
 
     # return prediction
     return model, df_feature_trained
+
+
+def randomforest_classifier(df, n_estimators_rfc, criterion_rfc, max_depth_rfc, min_samples_split_rfc,
+                            min_samples_leaf_rfc, min_weight_fraction_leaf_rfc, max_features_rfc, max_leaf_nodes_rfc,
+                            min_impurity_decrease_rfc, bootstrap_rfc, oob_score_rfc, random_state_rfc, ccp_alpha_rfc,
+                            df_columns_dropdown_label_rfc):
+    """
+    :param df:
+    :param n_estimators_rfc:
+    :param criterion_rfc:
+    :param max_depth_rfc:
+    :param min_samples_split_rfc:
+    :param min_samples_leaf_rfc:
+    :param min_weight_fraction_leaf_rfc:
+    :param max_features_rfc:
+    :param max_leaf_nodes_rfc:
+    :param min_impurity_decrease_rfc:
+    :param bootstrap_rfc:
+    :param oob_score_rfc:
+    :param random_state_rfc:
+    :param ccp_alpha_rfc:
+    :param df_columns_dropdown_label_rfc:
+    :return:
+    """
+
+    df = df.dropna()
+    X = pd.get_dummies(df.drop(df_columns_dropdown_label_rfc, axis=1), drop_first=True)
+    y = df[df_columns_dropdown_label_rfc]
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=101)
+    model = RandomForestClassifier(n_estimators=n_estimators_rfc, criterion=criterion_rfc, max_depth=max_depth_rfc,
+                                   min_samples_split=min_samples_split_rfc, min_samples_leaf=min_samples_leaf_rfc,
+                                   min_weight_fraction_leaf=min_weight_fraction_leaf_rfc, max_features=max_features_rfc,
+                                   max_leaf_nodes=max_leaf_nodes_rfc, min_impurity_decrease=min_impurity_decrease_rfc,
+                                   bootstrap=bootstrap_rfc, oob_score=oob_score_rfc, random_state=random_state_rfc,
+                                   ccp_alpha=ccp_alpha_rfc)
+    model.fit(X_train, y_train)
+    base_pred = model.predict(X_test)
+
+    model_accuracy_score = accuracy_score(y_true=y_test, y_pred=base_pred)
+    model_accuracy_score = round(model_accuracy_score, 4)
+
+    cm = confusion_matrix(y_test, base_pred)
+    df_columns_dropdown_label_rfc = list(df[df_columns_dropdown_label_rfc].unique())
+    fig = ff_plot_confusion_matrix(cm, df_columns_dropdown_label_rfc, df_columns_dropdown_label_rfc)
+
+    data = model.feature_importances_
+    data = data.round(3)
+
+    df_feature = pd.DataFrame(index=X.columns, data=data).reset_index()
+    df_feature.columns = ['Feature Name', 'Feature Importance']
+    df_feature = df_feature.sort_values(by='Feature Importance', ascending=False)
+
+    dummy_features_df = X[:1]
+    dummy_features_df_columns = list(X.columns)
+
+    return fig, df_feature, dummy_features_df, dummy_features_df_columns, model_accuracy_score
+
+
+def train_randomforest_classifier(df, n_estimators_rfc, criterion_rfc, max_depth_rfc, min_samples_split_rfc,
+                                  min_samples_leaf_rfc, min_weight_fraction_leaf_rfc, max_features_rfc,
+                                  max_leaf_nodes_rfc, min_impurity_decrease_rfc, bootstrap_rfc, oob_score_rfc,
+                                  random_state_rfc, ccp_alpha_rfc, df_columns_dropdown_label_rfc):
+    """
+    :param df:
+    :param n_estimators_rfc:
+    :param criterion_rfc:
+    :param max_depth_rfc:
+    :param min_samples_split_rfc:
+    :param min_samples_leaf_rfc:
+    :param min_weight_fraction_leaf_rfc:
+    :param max_features_rfc:
+    :param max_leaf_nodes_rfc:
+    :param min_impurity_decrease_rfc:
+    :param bootstrap_rfc:
+    :param oob_score_rfc:
+    :param random_state_rfc:
+    :param ccp_alpha_rfc:
+    :param df_columns_dropdown_label_rfc:
+    :return:
+    """
+
+    X = pd.get_dummies(df.drop(df_columns_dropdown_label_rfc, axis=1), drop_first=True)
+    y = df[df_columns_dropdown_label_rfc]
+    model = RandomForestClassifier(n_estimators=n_estimators_rfc, criterion=criterion_rfc, max_depth=max_depth_rfc,
+                                   min_samples_split=min_samples_split_rfc, min_samples_leaf=min_samples_leaf_rfc,
+                                   min_weight_fraction_leaf=min_weight_fraction_leaf_rfc, max_features=max_features_rfc,
+                                   max_leaf_nodes=max_leaf_nodes_rfc, min_impurity_decrease=min_impurity_decrease_rfc,
+                                   bootstrap=bootstrap_rfc, oob_score=oob_score_rfc, random_state=random_state_rfc,
+                                   ccp_alpha=ccp_alpha_rfc)
+    model.fit(X, y)
+
+    data = model.feature_importances_
+    data = data.round(3)
+
+    df_feature_trained = pd.DataFrame(index=X.columns, data=data).reset_index()
+    df_feature_trained.columns = ['Feature Name', 'Feature Importance']
+    df_feature_trained = df_feature_trained.sort_values(by='Feature Importance', ascending=False)
+
+    return model, df_feature_trained
+
+
+def run_kmeans_cluster(df, n_clusters_kmc, init_kmc, n_init_kmc, max_iter_kmc, tol_kmc, random_state_kmc, copy_x_kmc,
+                       algorithm_kmc):
+    """
+    :param df:
+    :param n_clusters_kmc:
+    :param init_kmc:
+    :param n_init_kmc:
+    :param max_iter_kmc:
+    :param tol_kmc:
+    :param random_state_kmc:
+    :param copy_x_kmc:
+    :param algorithm_kmc:
+    :return:
+    """
+    X = pd.get_dummies(df, drop_first=True)
+    model = KMeans(n_clusters=n_clusters_kmc, init=init_kmc, n_init=n_init_kmc, max_iter=max_iter_kmc, tol=tol_kmc,
+                   random_state=random_state_kmc, copy_x=copy_x_kmc, algorithm=algorithm_kmc)
+    model = model.fit(X)
+
+    dummy_features_df = X[:1]
+    dummy_features_df_columns = list(X.columns)
+
+    label = model.fit_predict(X)
+
+    col_x = df[label == 0].columns[0]
+    col_y = df[label == 0].columns[-1]
+    fig = go.Figure()
+    for i in set(label):
+        fig.add_scatter(x=df[label == i][col_x], y=df[label == i][col_y], mode="markers", name=f'Cluster {i}')
+
+    return fig, model, dummy_features_df, dummy_features_df_columns
 
 
 def logistic_regression(df, penalty_lr, dual_lr, tol_lr, c_lr, fit_intercept_lr, intercept_scaling_lr, random_state_lr,
@@ -175,12 +308,12 @@ def logistic_regression(df, penalty_lr, dual_lr, tol_lr, c_lr, fit_intercept_lr,
     fig = ff_plot_confusion_matrix(cm, df_columns_dropdown_label, df_columns_dropdown_label)
 
     # Here Feature Importance Matrix is created manually
-    data = model.coef_[0] # [0] because it is array inside array
+    data = model.coef_[0]  # [0] because it is array inside array
     data = data.round(3)
 
     df_feature = pd.DataFrame(index=X.columns, data=data).reset_index()
     df_feature.columns = ['Feature Name', 'Feature Importance']
-    df_feature["importance"] = pow(math.e, data) # This step can be skipped
+    df_feature["importance"] = pow(math.e, data)  # This step can be skipped
     df_feature = df_feature.sort_values(by='Feature Importance', ascending=False)
 
     dummy_features_df = X[:1]
